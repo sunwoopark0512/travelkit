@@ -1,9 +1,16 @@
 # 出行必带小程序 - 完整部署和使用指南
 
+## 项目名称
+
+**出行必带小程序（Travelkit）**：一款面向个人和小团队的智能出行物品管理与查验工具。
+
 ## 📋 目录
 
+- [项目名称](#项目名称)
 - [项目简介](#项目简介)
-- [环境要求](#环境要求)
+- [运行环境](#运行环境)
+- [依赖库及安装命令](#依赖库及安装命令)
+- [详细运行步骤](#详细运行步骤)
 - [数据库配置](#数据库配置)
 - [后端配置与启动](#后端配置与启动)
 - [小程序配置与启动](#小程序配置与启动)
@@ -30,7 +37,7 @@
 
 ---
 
-## 🔧 环境要求
+## 🔧 运行环境
 
 ### 必需软件
 
@@ -49,6 +56,12 @@
 4. **微信开发者工具**
    - 下载地址：https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html
    - 使用最新稳定版本
+
+5. **Node.js 16+（可选）**
+   - 仅在需要使用额外前端构建工具或脚本时使用，本项目主流程不强依赖
+
+6. **Python 3.8+（可选）**
+   - 可用于后续扩展的数据分析或脚本处理，本项目当前版本未强制依赖
 
 ### 环境检查
 
@@ -69,6 +82,153 @@ java -version
 mvn -version
 # 应该显示Maven版本和Java版本信息
 ```
+
+---
+
+## 📦 依赖库及安装命令
+
+本项目分为 **后端（Spring Boot）** 和 **微信小程序前端** 两部分。
+
+### 后端依赖（通过 Maven 管理）
+
+主要依赖包括（节选）：
+
+- `spring-boot-starter-web`：Web 与 REST 接口支持
+- `spring-boot-starter-test`：单元测试
+- `mysql-connector-java`：MySQL 驱动
+- `mybatis-spring-boot-starter`：MyBatis 持久层框架
+- `druid-spring-boot-starter`：Druid 数据源连接池
+- `lombok`：简化实体类代码
+- `knife4j-spring-boot-starter`：API 文档（Swagger 增强）
+
+所有依赖由 Maven 自动下载，无需手动逐个安装。
+
+**安装命令：**
+
+```bash
+cd new-backend
+# 下载依赖并编译
+mvn clean install -DskipTests
+```
+
+如果只是运行项目，也可以直接：
+
+```bash
+cd new-backend
+mvn dependency:resolve
+```
+
+### 小程序前端依赖
+
+本项目使用 **原生微信小程序** 技术栈：
+
+- 不依赖 npm 包管理
+- 不需要 `npm install`
+- 所有代码直接由微信开发者工具编译运行
+
+只需安装并使用微信开发者工具打开 `last-mini-program` 目录即可。
+
+---
+
+## 🧭 详细运行步骤
+
+本节为评委提供一个 **从零到跑通项目** 的完整流程，总结前文所有关键步骤。
+
+### 步骤 1：安装基础环境
+
+1. 安装并启动 **MySQL 5.7+ / 8.0+**
+2. 安装 **JDK 8+ / 11+ / 17**，配置 `JAVA_HOME`
+3. 安装 **Maven 3.6+**
+4. 安装 **微信开发者工具**
+5. （可选）安装 Node.js 16+、Python 3.8+
+
+### 步骤 2：导入数据库（使用 123.sql）
+
+1. 打开命令行/终端，执行：
+   ```bash
+   mysql -u root -p
+   ```
+2. 在 MySQL 中创建数据库：
+   ```sql
+   CREATE DATABASE IF NOT EXISTS check
+     DEFAULT CHARACTER SET utf8mb4
+     COLLATE utf8mb4_unicode_ci;
+   EXIT;
+   ```
+3. 在命令行中导入 `123.sql`：
+   ```bash
+   mysql -u root -p check < new-backend/sql/123.sql
+   ```
+4. 可选：用客户端工具（Navicat / Workbench）导入同一个 `123.sql` 文件。
+
+### 步骤 3：配置后端数据库连接
+
+1. 打开文件：`new-backend/src/main/resources/application.yml`
+2. 根据本机 MySQL 配置修改：
+   ```yaml
+   spring:
+     datasource:
+       druid:
+         username: root          # 修改为实际用户名
+         password: 你的MySQL密码   # 修改为实际密码
+         driver-class-name: com.mysql.cj.jdbc.Driver
+         url: jdbc:mysql://localhost:3306/check?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8
+   ```
+3. 保存文件。
+
+### 步骤 4：下载依赖并启动后端
+
+1. 打开命令行，进入后端目录：
+   ```bash
+   cd new-backend
+   ```
+2. 下载依赖并编译（首次必做）：
+   ```bash
+   mvn clean install -DskipTests
+   ```
+3. 启动后端服务：
+   ```bash
+   mvn spring-boot:run
+   ```
+4. 等待控制台出现：
+   - `Started CheckApplication ...`
+   - `Tomcat started on port(s): 8080`  
+   表示后端已在 `http://localhost:8080` 正常运行。
+5. 在浏览器访问：`http://localhost:8080/doc.html`  
+   若能打开接口文档，说明后端运行正常。
+
+### 步骤 5：配置小程序 API 地址
+
+1. 打开文件：`last-mini-program/utils/api.js`
+2. 确认或修改为：
+   ```javascript
+   const BASE_URL = 'http://localhost:8080'; // 后端API地址
+   ```
+3. 如果后端不是跑在本机或端口不是 8080，请相应修改为实际地址。
+
+### 步骤 6：配置微信开发者工具
+
+1. 打开 **微信开发者工具**
+2. 点击左上角 **“导入项目”**：
+   - 项目目录：选择 `last-mini-program`
+   - AppID：使用自己的测试号或正式小程序 AppID
+3. 导入成功后，点击右上角 **“详情”**：
+   - 在 **“本地设置”** 选项卡中，勾选：  
+     **✅ 不校验合法域名、web-view（业务域名）、TLS 版本以及 HTTPS 证书**
+4. 点击工具栏 **“编译”** 按钮，等待小程序在模拟器中启动。
+
+### 步骤 7：联调与登录测试
+
+1. 确认后端控制台无报错，端口 `8080` 处于监听状态。
+2. 在微信开发者工具中：
+   - 打开 **“调试器” → “Network”** 面板
+   - 返回到登录页，勾选协议，点击 **“微信授权登录”** 或 **“游客模式”**
+3. 观察 Network 面板：
+   - 确认请求地址为：`http://localhost:8080/api/...`
+   - 返回 HTTP 200 且有业务数据
+4. 登录成功后，进入首页和行程列表，验证数据展示是否正常。
+
+至此，评委即可完整跑通本项目（数据库 + 后端 + 小程序）全流程。
 
 ---
 
