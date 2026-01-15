@@ -1,0 +1,21 @@
+name: Android Audit Governance
+
+on:
+  push:
+    paths:
+      - 'travelkit/apps/android/**'
+  pull_request:
+    paths:
+      - 'travelkit/apps/android/**'
+
+jobs:
+  audit-regression:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run CI Regression (Lite)
+        shell: pwsh
+        run: |
+          cd travelkit/apps/android
+          ./ci_regression.ps1
