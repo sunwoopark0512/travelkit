@@ -8,19 +8,32 @@ on:
     paths:
       - 'apps/android/**'
 
+permissions:
+  contents: read
+  pull-requests: write # Required for sticky comment
+
 jobs:
   audit-gate:
     runs-on: windows-latest
+    outputs:
+      # Pass the exit code or status to the next job if needed, 
+      # but artifact sharing is the primary data channel.
+      gate_status: ${{ steps.gate.outcome }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Needed for git diff
+          fetch-depth: 0
 
       - name: Run Oracle Gate
+        id: gate
         shell: pwsh
+        # Continue on error so we can upload the report even if verification fails
+        continue-on-error: true
         run: |
           cd apps/android
           ./gate.ps1
+          # Capture exit code explicitly if needed for logic, 
+          # but continue-on-error handles the step status.
       
       - name: Upload Gate Report
         if: always()
@@ -28,3 +41,24 @@ jobs:
         with:
           name: gate-report
           path: apps/android/_gate_report.md
+      
+      # Now fail the job if the gate failed, AFTER creating artifact
+      - name: Check Gate Status
+        if: steps.gate.outcome != 'success'
+        run: exit 1
+
+  report-gate:
+    needs: audit-gate
+    if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest # Linux is faster/cheaper for simple reporting
+    steps:
+      - name: Download Gate Report
+        uses: actions/download-artifact@v4
+        with:
+          name: gate-report
+          
+      - name: Post Sticky Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: oracle-final-gate
+          path: _gate_report.md
