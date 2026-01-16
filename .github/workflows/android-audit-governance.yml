@@ -3,10 +3,11 @@ name: Android Audit Governance
 on:
   push:
     paths:
-      - 'travelkit/apps/android/**'
+
+      - 'apps/android/**'
   pull_request:
     paths:
-      - 'travelkit/apps/android/**'
+      - 'apps/android/**'
 
 jobs:
   audit-regression:
@@ -17,5 +18,5 @@ jobs:
       - name: Run CI Regression (Lite)
         shell: pwsh
         run: |
-          cd travelkit/apps/android
+          cd apps/android
           ./ci_regression.ps1
