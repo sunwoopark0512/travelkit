@@ -3,7 +3,6 @@ name: Android Audit Governance
 on:
   push:
     paths:
-
       - 'apps/android/**'
   pull_request:
     paths:
