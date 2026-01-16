@@ -1,0 +1,17 @@
+# Audit Allowlist Globs
+# Files matching these patterns are ALLOWED to be modified in "Hardening/Governance" PRs.
+# Used by gate.ps1 to enforce scope.
+
+.github/workflows/android-audit-governance.yml
+.github/pull_request_template.md
+apps/android/ci_regression.ps1
+apps/android/gate.ps1
+apps/android/secret_scan.ps1
+apps/android/audit_allowlist_globs.txt
+apps/android/secret_scan_ignore_globs.txt
+apps/android/app/src/debug/java/com/travelkit/app/ui/components/DebugControlPanel.kt
+apps/android/app/src/main/java/com/travelkit/app/ui/components/DebugControlPanel.kt
+docs/governance/secret-scan-policy.md
+
+# Legacy/Maintenance
+apps/android/PR3_DESCRIPTION.md

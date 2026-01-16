@@ -9,13 +9,22 @@ on:
       - 'apps/android/**'
 
 jobs:
-  audit-regression:
+  audit-gate:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Run CI Regression (Lite)
+        with:
+          fetch-depth: 0 # Needed for git diff
+
+      - name: Run Oracle Gate
         shell: pwsh
         run: |
           cd apps/android
-          ./ci_regression.ps1
+          ./gate.ps1
+      
+      - name: Upload Gate Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-report
+          path: apps/android/_gate_report.md
