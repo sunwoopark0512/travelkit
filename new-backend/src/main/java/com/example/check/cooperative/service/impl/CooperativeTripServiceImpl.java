@@ -11,7 +11,7 @@ import com.example.check.cooperative.service.CooperativeItemService;
 import com.example.check.cooperative.service.CooperativeInviteService;
 import com.example.check.mapper.UserMapper;
 import com.example.check.pojo.User;
-
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +33,7 @@ public class CooperativeTripServiceImpl implements CooperativeTripService {
 
     @Autowired
     private CooperativeInviteService inviteService;
-
+    
     @Autowired
     private CooperativeItemCheckMapper checkMapper;
 
@@ -43,41 +43,41 @@ public class CooperativeTripServiceImpl implements CooperativeTripService {
     @Override
     public CooperativeTrip getById(Integer id, Integer userId) {
         CooperativeTrip trip = tripMapper.selectById(id);
-
-        // If userId resides, calculate user check progress
+        
+        // 如果有userId，计算该用户的查验进度
         if (trip != null && userId != null) {
             try {
-                // Query user check records for this trip
+                // 查询该用户在该行程中的查验记录
                 List<CooperativeItemCheck> checks = checkMapper.selectByTripIdAndUserId(id, userId);
-                // Query all items for this trip
+                // 查询该行程的所有物品
                 List<com.example.check.cooperative.pojo.CooperativeItem> items = itemService.listByTrip(id, null);
-
-                // Calculate user progress
-                Map<Integer, Integer> checkMap = checks.stream()
+                
+                // 计算该用户的查验进度
+                    Map<Integer, Integer> checkMap = checks.stream()
                         .collect(Collectors.toMap(CooperativeItemCheck::getItemId, CooperativeItemCheck::getChecked));
-
-                int totalItems = items.size();
-                int checkedItems = (int) items.stream()
+                    
+                    int totalItems = items.size();
+                    int checkedItems = (int) items.stream()
                         .filter(item -> {
                             Integer checkedValue = checkMap.get(item.getId());
-                            return checkedValue != null && checkedValue == 1; // Only checked=1 counts as checked
+                            return checkedValue != null && checkedValue == 1; // 只有checked=1才算已查验
                         })
                         .count();
                 int progress = totalItems > 0 ? (int) Math.round((double) checkedItems / totalItems * 100) : 0;
-
-                // Update trip progress info
+                
+                // 更新行程的进度信息
                 trip.setTotalItems(totalItems);
                 trip.setCheckedItems(checkedItems);
                 trip.setProgress(progress);
             } catch (Exception e) {
-                // If query fails, use defaults
-                System.err.println("Calculate user progress failed: " + e.getMessage());
+                // 如果查询失败，使用默认值
+                System.err.println("计算用户进度失败: " + e.getMessage());
                 trip.setTotalItems(0);
                 trip.setCheckedItems(0);
                 trip.setProgress(0);
             }
         }
-
+        
         return trip;
     }
 
@@ -86,9 +86,9 @@ public class CooperativeTripServiceImpl implements CooperativeTripService {
         List<MemberProgressDTO> progressList = tripMapper.selectMemberProgress(tripId);
         List<MemberProgressDTO> progressList1 = new ArrayList<>();
         for (int i = 0; i < progressList.size(); i++) {
-            MemberProgressDTO memberProgressDTO = progressList.get(i);
-            int useId = memberProgressDTO.getUserId();
-            User user = userMapper.selectById(useId);
+            MemberProgressDTO memberProgressDTO=progressList.get(i);
+            int useId=memberProgressDTO.getUserId();
+            User user=userMapper.selectById(useId);
             memberProgressDTO.setMemberName(user.getName());
             memberProgressDTO.setAvatarUrl(user.getAvatar());
             progressList1.add(memberProgressDTO);
@@ -117,45 +117,43 @@ public class CooperativeTripServiceImpl implements CooperativeTripService {
     @Override
     public List<CooperativeTrip> listByUser(Integer userId) {
         List<CooperativeTrip> trips = tripMapper.selectByUserId(userId);
-
+        
         // 为每个行程计算当前用户的查验进度
         if (userId != null) {
             for (CooperativeTrip trip : trips) {
                 try {
-                    // Query user check records for this trip
+                    // 查询该用户在该行程中的查验记录
                     List<CooperativeItemCheck> checks = checkMapper.selectByTripIdAndUserId(trip.getId(), userId);
-                    // Query all items for this trip
-                    List<com.example.check.cooperative.pojo.CooperativeItem> items = itemService
-                            .listByTrip(trip.getId(), null);
-
-                    // Calculate user progress
+                    // 查询该行程的所有物品
+                    List<com.example.check.cooperative.pojo.CooperativeItem> items = itemService.listByTrip(trip.getId(), null);
+                    
+                    // 计算该用户的查验进度
                     Map<Integer, Integer> checkMap = checks.stream()
-                            .collect(Collectors.toMap(CooperativeItemCheck::getItemId,
-                                    CooperativeItemCheck::getChecked));
-
+                        .collect(Collectors.toMap(CooperativeItemCheck::getItemId, CooperativeItemCheck::getChecked));
+                    
                     int totalItems = items.size();
                     int checkedItems = (int) items.stream()
-                            .filter(item -> {
-                                Integer checkedValue = checkMap.get(item.getId());
-                                return checkedValue != null && checkedValue == 1; // 只有checked=1才算已查验
-                            })
-                            .count();
+                        .filter(item -> {
+                            Integer checkedValue = checkMap.get(item.getId());
+                            return checkedValue != null && checkedValue == 1; // 只有checked=1才算已查验
+                        })
+                        .count();
                     int progress = totalItems > 0 ? (int) Math.round((double) checkedItems / totalItems * 100) : 0;
-
-                    // Update trip progress info
+                    
+                    // 更新行程的进度信息
                     trip.setTotalItems(totalItems);
                     trip.setCheckedItems(checkedItems);
                     trip.setProgress(progress);
                 } catch (Exception e) {
-                    // If query fails, use defaults
-                    System.err.println("Calculate user progress failed: " + e.getMessage());
+                    // 如果查询失败，使用默认值
+                    System.err.println("计算用户进度失败: " + e.getMessage());
                     trip.setTotalItems(0);
                     trip.setCheckedItems(0);
                     trip.setProgress(0);
                 }
             }
         }
-
+        
         return trips;
     }
 
@@ -194,14 +192,14 @@ public class CooperativeTripServiceImpl implements CooperativeTripService {
     @Override
     @Transactional
     public boolean deleteTrip(Integer tripId) {
-        // Cascade delete
-        // 1. Delete invite records
+        // 级联删除相关数据
+        // 1. 删除邀请记录
         inviteService.deleteByTripId(tripId);
-        // 2. Delete member records
+        // 2. 删除成员记录
         tripMapper.deleteMembersByTripId(tripId);
-        // 3. Delete item records
+        // 3. 删除物品记录
         itemService.deleteByTripId(tripId);
-        // 4. Delete trip
+        // 4. 删除行程
         return tripMapper.deleteById(tripId) > 0;
     }
 
@@ -291,3 +289,4 @@ public class CooperativeTripServiceImpl implements CooperativeTripService {
         }
     }
 }
+

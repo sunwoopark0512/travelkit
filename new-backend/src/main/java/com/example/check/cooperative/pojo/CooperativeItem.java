@@ -1,7 +1,7 @@
 package com.example.check.cooperative.pojo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -22,17 +22,17 @@ public class CooperativeItem {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
-
-    // Transient field, returns user check status (from cooperative_item_checks)
-    // Not mapped to DB, used transient
+    
+    // 临时字段，用于返回给前端，表示当前用户的查验状态（从cooperative_item_checks表查询）
+    // 不映射到数据库，使用transient关键字
     private transient Boolean checked;
-
-    // Transient field, returns check status value (0=unchecked, 1=checked,
-    // 2=skipped)
-    // Not mapped to DB, used transient
+    
+    // 临时字段，用于返回给前端，表示当前用户的查验状态值（0=未查验, 1=已携带, 2=已跳过）
+    // 不映射到数据库，使用transient关键字
     private transient Integer checkedStatus;
-
-    // Transient field, returns adder name (from users type)
-    // Not mapped to DB, used transient
+    
+    // 临时字段，用于返回给前端，表示添加者的姓名（从users表查询）
+    // 不映射到数据库，使用transient关键字
     private transient String addedByName;
 }
+
