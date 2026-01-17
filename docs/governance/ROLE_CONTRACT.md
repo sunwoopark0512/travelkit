@@ -51,6 +51,7 @@ To lock down the operational quality of the human/agent system (Antigravity, Sis
 1.  **No Unverified Claims**: Any "Done", "Fixed", "Complete" must link to a specific log line or artifact.
 2.  **Role Separation**: Antigravity does not run code; Oracle does not plan.
 3.  **Sticky Update Verification**: Must verify `updatedAt` increase + `body` change before merge.
+4.  **Ledger Submission**: `project_ledger.md` generation and Airtable sync (or mock) is mandatory for PASS.
 
 ### Golden Scenarios (Regression Tests)
 1.  **PR Creation**: Branch -> Commit -> Push -> PR -> Link Generation.
@@ -61,6 +62,7 @@ To lock down the operational quality of the human/agent system (Antigravity, Sis
     - Create: Comment ID exists.
     - Update: Comment ID same, `updatedAt` new, `timestamp` new.
 6.  **Role Lint Fail**: claiming "Fixed" without log -> Fail.
+7.  **Ledger Fail**: Missing `project_ledger.md` or Airtable script error -> Fail.
 
 ## 4. Operational KPIs
 - **Velocity**: Time from Idea to PR Merge.

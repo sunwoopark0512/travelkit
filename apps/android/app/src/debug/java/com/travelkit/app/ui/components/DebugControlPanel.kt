@@ -13,4 +13,7 @@ fun DebugControlPanel() {
     Button(onClick = { Log.w("CheckoutUI", "checkout_action_view: debug_force_emit") }) {
         Text("[DEBUG] Force Checkout Log")
     }
+    Button(onClick = { Log.w("RevenueExp", "exp_super_offer: shown") }) {
+        Text("[EXP] Revenue: Super Offer")
+    }
 }
