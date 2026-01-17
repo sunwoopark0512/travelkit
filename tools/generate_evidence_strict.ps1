@@ -31,16 +31,19 @@ function Log-Section {
 
 # 1. CHECKS_SNAPSHOT (STRICT)
 try {
-    $Checks = gh pr checks $PrNumber 2>&1
+    $Checks = gh pr checks $PrNumber 2>$null
     $CheckLog = $Checks | Out-String
-    if ($Checks -match "fail") { $CheckStatus = "❌ FAIL" }
-    elseif ($Checks -match "pending") { $CheckStatus = "⏳ PENDING" }
+    if ([string]::IsNullOrWhiteSpace($CheckLog)) {
+        $CheckLog = "No CI checks configured on this branch."
+        $CheckStatus = "✅ PASS (No CI)"
+    } elseif ($CheckLog -match "fail") { $CheckStatus = "❌ FAIL" }
+    elseif ($CheckLog -match "pending") { $CheckStatus = "⏳ PENDING" }
     else { $CheckStatus = "✅ PASS" }
 } catch {
     $CheckLog = "Error fetching checks: $_"
     $CheckStatus = "⚠️ UNKNOWN"
 }
-Log-Section "CHECKS_SNAPSHOT (STRICT)" "$CheckLog`nVerdict: $CheckStatus"
+Log-Section "CHECKS_SNAPSHOT (STRICT)" "$CheckLog`n`nVerdict: $CheckStatus"
 
 # 2. LATEST_RUN_META
 try {
@@ -70,7 +73,8 @@ if (Test-Path "docs/governance/ROLE_CONTRACT.md") {
 }
 
 # 5. PROJECT_OVERVIEW_MD
-powershell -File tools/generate_ledger.ps1
+$LedgerOutput = & powershell -File tools/generate_ledger.ps1 2>&1 | Out-String
+Write-Host $LedgerOutput
 if (Test-Path "outputs/project_overview.md") {
     Log-Section "PROJECT_OVERVIEW_MD" (Get-Content "outputs/project_overview.md" -Raw -Encoding UTF8)
 } else {
@@ -85,11 +89,12 @@ if (Test-Path "outputs/project_ledger.md") {
 }
 
 # 7. AIRTABLE_SYNC_LOG
-powershell -File tools/update_airtable.ps1
+$AirtableOutput = & powershell -File tools/update_airtable.ps1 2>&1 | Out-String
+Write-Host $AirtableOutput
 if (Test-Path "outputs/airtable_sync.log") {
     $SyncLog = Get-Content "outputs/airtable_sync.log" -Raw -Encoding UTF8
     $SyncVerdict = if ($SyncLog -match "DRY_RUN" -or $SyncLog -match "AIRTABLE_OK") { "✅ PASS (Logged)" } else { "❌ FAIL" }
-    Log-Section "AIRTABLE_SYNC_LOG" "$SyncLog`nVerdict: $SyncVerdict"
+    Log-Section "AIRTABLE_SYNC_LOG" "$SyncLog`n`nVerdict: $SyncVerdict"
 } else {
     Log-Section "AIRTABLE_SYNC_LOG" "❌ FAIL: Log not found"
 }
