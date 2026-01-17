@@ -6,19 +6,27 @@ param(
 
 $ErrorActionPreference = "Continue"
 mkdir outputs -Force | Out-Null
-"=== PR #$PrNumber Strict Evidence Bundle (Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')) ===" | Out-File $OutputFile -Encoding utf8
-"=== PR #$PrNumber Strict Evidence Bundle (Oracle Excerpt) ===" | Out-File $OracleExcerpt -Encoding utf8
+
+# Force UTF-8 Encoding helpers
+function Write-UTF8 ($Path, $Content) {
+    [System.IO.File]::AppendAllText($Path, "$Content`n", [System.Text.Encoding]::UTF8)
+}
+
+function Init-File ($Path, $Content) {
+    [System.IO.File]::WriteAllText($Path, "$Content`n", [System.Text.Encoding]::UTF8)
+}
+
+Init-File $OutputFile "=== PR #$PrNumber Strict Evidence Bundle (Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')) ==="
+Init-File $OracleExcerpt "=== PR #$PrNumber Strict Evidence Bundle (Oracle Excerpt) ==="
 
 function Log-Section {
     param($Title, $Content)
     $Header = "`n--- [EVIDENCE] $Title ---"
     $FullContent = "$Header`n$Content"
     
-    # Bundle can be larger
-    $FullContent | Out-File $OutputFile -Append -Encoding utf8
-    
-    # Oracle Excerpt needs to be clean UTF-8
-    $FullContent | Out-File $OracleExcerpt -Append -Encoding utf8
+    # Write to both files in strict UTF-8
+    Write-UTF8 $OutputFile $FullContent
+    Write-UTF8 $OracleExcerpt $FullContent
 }
 
 # 1. CHECKS_SNAPSHOT (STRICT)
@@ -55,7 +63,7 @@ try {
 
 # 4. ROLE_CONTRACT_LEDGER_RULE_EXCERPT
 if (Test-Path "docs/governance/ROLE_CONTRACT.md") {
-    $Contract = Get-Content docs/governance/ROLE_CONTRACT.md | Select-String "Ledger Submission" -Context 0,2
+    $Contract = Get-Content docs/governance/ROLE_CONTRACT.md | Select-String "Ledger Submission" -Context 0,2 | Out-String
     Log-Section "ROLE_CONTRACT_LEDGER_RULE_EXCERPT" "$Contract"
 } else {
     Log-Section "ROLE_CONTRACT_LEDGER_RULE_EXCERPT" "❌ FAIL: ROLE_CONTRACT.md not found"
@@ -64,14 +72,14 @@ if (Test-Path "docs/governance/ROLE_CONTRACT.md") {
 # 5. PROJECT_OVERVIEW_MD
 powershell -File tools/generate_ledger.ps1
 if (Test-Path "outputs/project_overview.md") {
-    Log-Section "PROJECT_OVERVIEW_MD" (Get-Content "outputs/project_overview.md" -Raw)
+    Log-Section "PROJECT_OVERVIEW_MD" (Get-Content "outputs/project_overview.md" -Raw -Encoding UTF8)
 } else {
     Log-Section "PROJECT_OVERVIEW_MD" "❌ FAIL: project_overview.md not found"
 }
 
 # 6. PROJECT_LEDGER_MD
 if (Test-Path "outputs/project_ledger.md") {
-    Log-Section "PROJECT_LEDGER_MD" (Get-Content "outputs/project_ledger.md" -Raw)
+    Log-Section "PROJECT_LEDGER_MD" (Get-Content "outputs/project_ledger.md" -Raw -Encoding UTF8)
 } else {
     Log-Section "PROJECT_LEDGER_MD" "❌ FAIL: project_ledger.md not found"
 }
@@ -79,7 +87,7 @@ if (Test-Path "outputs/project_ledger.md") {
 # 7. AIRTABLE_SYNC_LOG
 powershell -File tools/update_airtable.ps1
 if (Test-Path "outputs/airtable_sync.log") {
-    $SyncLog = Get-Content "outputs/airtable_sync.log" -Raw
+    $SyncLog = Get-Content "outputs/airtable_sync.log" -Raw -Encoding UTF8
     $SyncVerdict = if ($SyncLog -match "DRY_RUN" -or $SyncLog -match "AIRTABLE_OK") { "✅ PASS (Logged)" } else { "❌ FAIL" }
     Log-Section "AIRTABLE_SYNC_LOG" "$SyncLog`nVerdict: $SyncVerdict"
 } else {
@@ -87,7 +95,7 @@ if (Test-Path "outputs/airtable_sync.log") {
 }
 
 # 8. STICKY_VERIFY
-$Sticky = powershell -File apps/android/sticky_verify.ps1 -PrNumber $PrNumber 2>&1
+$Sticky = powershell -File apps/android/sticky_verify.ps1 -PrNumber $PrNumber 2>&1 | Out-String
 $StickyVerdict = if ($Sticky -match "PASS") { "✅ PASS" } else { "❌ FAIL" }
 Log-Section "STICKY_VERIFY" "$Sticky`nVerdict: $StickyVerdict"
 
@@ -120,5 +128,5 @@ if ($CheckStatus -match "PASS" -and $SyncVerdict -match "PASS" -and $StickyVerdi
 }
 Log-Section "FINAL_VERDICT" $FinalVerdict
 
-Write-Host "Bundle generated at $OutputFile" -ForegroundColor Green
-Write-Host "Oracle Excerpt generated at $OracleExcerpt" -ForegroundColor Green
+Write-Host "Bundle generated at $OutputFile (UTF-8)" -ForegroundColor Green
+Write-Host "Oracle Excerpt generated at $OracleExcerpt (UTF-8)" -ForegroundColor Green
