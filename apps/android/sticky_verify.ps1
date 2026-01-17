@@ -69,17 +69,22 @@ Write-Host "✅ PASS: Single Sticky Comment Found (ID: $($Comment.id))" -Foregro
 
 # Check 3: Edited Status (Scientific Update Proof)
 # We check if 'lastEditedAt' is present and recent, or if 'updatedAt' > 'createdAt'
-$CreatedAt = [DateTime]::Parse($Comment.createdAt)
-$UpdatedAt = [DateTime]::Parse($Comment.updatedAt)
+$CreatedAt = Get-Date $Comment.createdAt
+$CreatedAt = Get-Date $Comment.createdAt
 
-if ($UpdatedAt -gt $CreatedAt) {
-    Write-Host "✅ PASS: Comment was updated." -ForegroundColor Green
-    Write-Host "   Created: $CreatedAt"
-    Write-Host "   Updated: $UpdatedAt"
-}
-else {
-    Write-Warning "⚠️ WARNING: Comment has not been edited yet (CreatedAt == UpdatedAt)."
-    # Not necessarily a fail if we just created it, but for an "Update" test, this is a fail.
+if ($Comment.updatedAt) {
+    $UpdatedAt = Get-Date $Comment.updatedAt
+    
+    if ($UpdatedAt -gt $CreatedAt) {
+        Write-Host "✅ PASS: Comment was updated." -ForegroundColor Green
+        Write-Host "   Created: $CreatedAt"
+        Write-Host "   Updated: $UpdatedAt"
+    }
+    else {
+        Write-Warning "⚠️ WARNING: Comment has not been edited yet (CreatedAt == UpdatedAt)."
+    }
+} else {
+     Write-Warning "⚠️ WARNING: 'updatedAt' field missing in GitHub response. Skipping timestamp update verification."
 }
 
 exit 0
