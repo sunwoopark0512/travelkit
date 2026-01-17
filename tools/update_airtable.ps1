@@ -15,9 +15,15 @@ foreach ($File in $FilesToCheck) {
 
 if (-not $env:AIRTABLE_API_KEY -or -not $env:AIRTABLE_BASE_ID) {
     Write-Warning "⚠️ AIRTABLE keys missing. Running in DRY_RUN mode."
-    $Msg = "DRY_RUN: Validated existence of $(($FilesToCheck).Count) files. Ready for upload."
-    $Msg | Out-File "outputs/airtable_upload_status.txt"
-    Write-Host $Msg -ForegroundColor Yellow
+    $LogContent = @"
+[Timestamp] $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+[Status] DRY_RUN
+[Message] Validated existence of $(($FilesToCheck).Count) files. Ready for upload.
+[Payload_Preview_Ledger]
+$(Get-Content 'outputs/project_ledger.md' -Raw)
+"@
+    $LogContent | Out-File "outputs/airtable_sync.log" -Encoding utf8
+    Write-Host "✅ DRY_RUN Logs saved to outputs/airtable_sync.log" -ForegroundColor Yellow
     exit 0
 }
 

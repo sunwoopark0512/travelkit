@@ -60,8 +60,12 @@ $Examples
 $GovHealth
 \`\`\`
 
-## 4. Next Actions (Revenue Loop)
+## 4. Active Experiment (Revenue Loop)
+$(Get-ChildItem -Path docs/experiments/*.md | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | Get-Content -Raw)
+
+## 5. Next Actions (Revenue Loop)
 - [ ] Merge current PR if Oracle PASS
+- [ ] Verify Airtable Upsert
 - [ ] Verify Airtable Upsert
 - [ ] Begin Revenue Feature: [Insert Feature Name]
 
