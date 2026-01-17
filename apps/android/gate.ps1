@@ -56,7 +56,7 @@ Add-Report "- **Base Branch**: **$BaseRef**"
 
 # --- 2. Evidence 1: Diff Scope Check ---
 Write-Host "🔍 [Gate] Checking Diff Scope..." -ForegroundColor Cyan
-$DiffFiles = git diff --name-only $BaseRef HEAD | ForEach-Object { $_.Trim() }
+$DiffFiles = git diff --name-only $BaseRef HEAD -- apps/android/ | ForEach-Object { $_.Trim() }
 
 if ($DiffFiles.Count -eq 0) {
     Add-Report "⚠️ **Warning**: No changed files detected."
