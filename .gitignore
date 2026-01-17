@@ -1,0 +1,23 @@
+###################
+# TravelKit Ignore
+###################
+
+# IDE / Editor
+.vscode/
+.idea/
+*.iml
+
+# Logs & Temporary Artifacts
+*.log
+_gate_report.md
+comments.json
+*.tmp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build Artifacts
+build/
+bin/
+target/
