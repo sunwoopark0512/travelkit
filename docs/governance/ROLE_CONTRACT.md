@@ -52,6 +52,7 @@ To lock down the operational quality of the human/agent system (Antigravity, Sis
 2.  **Role Separation**: Antigravity does not run code; Oracle does not plan.
 3.  **Sticky Update Verification**: Must verify `updatedAt` increase + `body` change before merge.
 4.  **Ledger Submission**: `project_ledger.md` generation and Airtable sync (or mock) is mandatory for PASS.
+5.  **Check Skipping**: If a check (e.g., `report-gate`) represents a "no-op" (Skipped) due to no relevant changes, it is considered `PASS_NA` (Not Applicable), provided the `audit-gate` or primary checks pass.
 
 ### Golden Scenarios (Regression Tests)
 1.  **PR Creation**: Branch -> Commit -> Push -> PR -> Link Generation.

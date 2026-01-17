@@ -35,5 +35,7 @@ apps/android/_gate_report.md
 docs/project_overview.md
 tools/generate_ledger.ps1
 tools/update_airtable.ps1
+tools/ulw.ps1
+tools/generate_evidence_strict.ps1
 generate_evidence.ps1
 verify_governance.ps1
