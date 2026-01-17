@@ -50,11 +50,10 @@ To lock down the operational quality of the human/agent system (Antigravity, Sis
 ### Rules
 1.  **No Unverified Claims**: Any "Done", "Fixed", "Complete" must link to a specific log line or artifact.
 2.  **Role Separation**: Antigravity does not run code; Oracle does not plan.
-3.  **Sticky Update Verification**: Must verify `updatedAt` increase + `body` change before merge.
-4.  **Ledger Submission**: `project_ledger.md` generation and Airtable sync (or mock) is mandatory for PASS.
-5.  **Check Skipping**: If a check (e.g., `report-gate`) represents a "no-op" (Skipped) due to no relevant changes, it is considered `PASS_NA` (Not Applicable), provided the `audit-gate` or primary checks pass.
-6.  **OpenCode Canon Mandate**: All work must adhere to `docs/opencode/opencode_canon_v1.md`, `glossary_v1.md`, and `control_playbook_v1.md`. Tool usage (Explore/Librarian/Sisyphus/Oracle) must follow Canon definitions.
-7.  **Strict Evidence Bundle**: All PRs must generate `outputs/evidence_bundle_prN.txt` containing: `CHECKS_SNAPSHOT`, `LATEST_RUN_META`, `DIFF_AFTER`, `ROLE_CONTRACT`, `PROJECT_LEDGER`, `AIRTABLE_SYNC_LOG`, `STICKY_VERIFY`, `FINAL_VERDICT`. PR Comments must optionally include the full bundle via `--body-file`.
+6.  **Offline-First SSoT**: All OpenCode operations must rely on `docs/opencode/*` and `outputs/opencode_evidence_bundle.txt` committed within the repo. External cloning is optional/manual only.
+7.  **Strict Evidence Bundle**: All PRs must generate `outputs/evidence_bundle_prN.txt` and a UTF-8 `outputs/oracle_excerpt_prN.md`.
+    -   **Standard 10 Headers**: The excerpt MUST contain: `CHECKS_SNAPSHOT`, `LATEST_RUN_META`, `DIFF_AFTER`, `ROLE_CONTRACT_LEDGER_RULE_EXCERPT`, `PROJECT_OVERVIEW_MD`, `PROJECT_LEDGER_MD`, `AIRTABLE_SYNC_LOG`, `STICKY_VERIFY`, `COMMAND_LOG`, `FINAL_VERDICT`.
+    -   **Upload**: PR Comments MUST use `gh pr comment --body-file outputs/oracle_excerpt_prN.md`. Inline text is forbidden.
 
 ### Golden Scenarios (Regression Tests)
 1.  **PR Creation**: Branch -> Commit -> Push -> PR -> Link Generation.
