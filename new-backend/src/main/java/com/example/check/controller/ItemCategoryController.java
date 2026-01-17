@@ -2,7 +2,6 @@ package com.example.check.controller;
 
 import com.example.check.pojo.ItemCategory;
 import com.example.check.service.ItemCategoryService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,10 +16,10 @@ import java.util.Map;
 @RequestMapping("/api/categories")
 @CrossOrigin(origins = "*")
 public class ItemCategoryController {
-    
+
     @Autowired
     private ItemCategoryService itemCategoryService;
-    
+
     /**
      * 根据ID查询分类
      */
@@ -42,7 +41,7 @@ public class ItemCategoryController {
         }
         return result;
     }
-    
+
     /**
      * 根据代码查询分类
      */
@@ -64,7 +63,7 @@ public class ItemCategoryController {
         }
         return result;
     }
-    
+
     /**
      * 查询所有分类
      */
@@ -81,7 +80,7 @@ public class ItemCategoryController {
         }
         return result;
     }
-    
+
     /**
      * 添加分类
      */
@@ -104,7 +103,7 @@ public class ItemCategoryController {
         }
         return result;
     }
-    
+
     /**
      * 更新分类
      */
@@ -127,7 +126,7 @@ public class ItemCategoryController {
         }
         return result;
     }
-    
+
     /**
      * 删除分类
      */

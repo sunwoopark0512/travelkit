@@ -1,14 +1,14 @@
 package com.example.check.controller;
 
 import com.example.check.config.JwtEdDsaUtil;
-import com.example.check.pojo.User;
+
 import com.example.check.service.UserService;
-import com.github.pagehelper.PageInfo;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.Map;
+
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import java.util.zip.GZIPInputStream;
@@ -27,11 +27,9 @@ import java.util.List;
 @RequestMapping("/api/test")
 @CrossOrigin(origins = "*")
 public class TestController {
-    
+
     @Autowired
     private UserService userService;
-    
-
 
     /**
      * 获取和风天气EdDSA JWT令牌（调试专用）
@@ -41,12 +39,13 @@ public class TestController {
         try {
             return JwtEdDsaUtil.generateHeWeatherJwt();
         } catch (Exception e) {
-            return "生成JWT出错:"+e.getMessage();
+            return "生成JWT出错:" + e.getMessage();
         }
     }
 
     /**
      * 获取城市候选列表
+     * 
      * @param dest 关键词
      * @return 和风API gzip解压后城市列表json
      */
@@ -106,6 +105,7 @@ public class TestController {
 
     /**
      * 输入locationId，获取30天天气（前端应从城市联想结果选择后传city.id来查）
+     * 
      * @param locationId 和风城市id
      * @return 天气json（gzip自动解压）
      */
