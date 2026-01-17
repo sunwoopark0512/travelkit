@@ -2,7 +2,7 @@ package com.example.check.controller;
 
 import com.example.check.pojo.ItemCategory;
 import com.example.check.service.ItemCategoryService;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,18 +11,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 物品分类控制器
+ * Item Category Controller
  */
 @RestController
 @RequestMapping("/api/categories")
 @CrossOrigin(origins = "*")
 public class ItemCategoryController {
-    
+
     @Autowired
     private ItemCategoryService itemCategoryService;
-    
+
     /**
-     * 根据ID查询分类
+     * Get category by ID
      */
     @GetMapping("/{id}")
     public Map<String, Object> getById(@PathVariable Integer id) {
@@ -34,17 +34,17 @@ public class ItemCategoryController {
                 result.put("data", category);
             } else {
                 result.put("success", false);
-                result.put("message", "分类不存在");
+                result.put("message", "Category not found");
             }
         } catch (Exception e) {
             result.put("success", false);
-            result.put("message", "查询失败：" + e.getMessage());
+            result.put("message", "Query failed: " + e.getMessage());
         }
         return result;
     }
-    
+
     /**
-     * 根据代码查询分类
+     * Get category by Code
      */
     @GetMapping("/code/{code}")
     public Map<String, Object> getByCode(@PathVariable String code) {
@@ -56,17 +56,17 @@ public class ItemCategoryController {
                 result.put("data", category);
             } else {
                 result.put("success", false);
-                result.put("message", "分类不存在");
+                result.put("message", "Category not found");
             }
         } catch (Exception e) {
             result.put("success", false);
-            result.put("message", "查询失败：" + e.getMessage());
+            result.put("message", "Query failed: " + e.getMessage());
         }
         return result;
     }
-    
+
     /**
-     * 查询所有分类
+     * Get all categories
      */
     @GetMapping("/all")
     public Map<String, Object> getAll() {
@@ -77,13 +77,13 @@ public class ItemCategoryController {
             result.put("data", categories);
         } catch (Exception e) {
             result.put("success", false);
-            result.put("message", "查询失败：" + e.getMessage());
+            result.put("message", "Query failed: " + e.getMessage());
         }
         return result;
     }
-    
+
     /**
-     * 添加分类
+     * Add category
      */
     @PostMapping
     public Map<String, Object> add(@RequestBody ItemCategory category) {
@@ -92,21 +92,21 @@ public class ItemCategoryController {
             boolean success = itemCategoryService.add(category);
             if (success) {
                 result.put("success", true);
-                result.put("message", "添加成功");
+                result.put("message", "Added successfully");
                 result.put("data", category);
             } else {
                 result.put("success", false);
-                result.put("message", "添加失败");
+                result.put("message", "Add failed");
             }
         } catch (Exception e) {
             result.put("success", false);
-            result.put("message", "添加失败：" + e.getMessage());
+            result.put("message", "Add failed: " + e.getMessage());
         }
         return result;
     }
-    
+
     /**
-     * 更新分类
+     * Update category
      */
     @PutMapping("/{id}")
     public Map<String, Object> update(@PathVariable Integer id, @RequestBody ItemCategory category) {
@@ -116,20 +116,20 @@ public class ItemCategoryController {
             boolean success = itemCategoryService.update(category);
             if (success) {
                 result.put("success", true);
-                result.put("message", "更新成功");
+                result.put("message", "Updated successfully");
             } else {
                 result.put("success", false);
-                result.put("message", "更新失败");
+                result.put("message", "Update failed");
             }
         } catch (Exception e) {
             result.put("success", false);
-            result.put("message", "更新失败：" + e.getMessage());
+            result.put("message", "Update failed: " + e.getMessage());
         }
         return result;
     }
-    
+
     /**
-     * 删除分类
+     * Delete category
      */
     @DeleteMapping("/{id}")
     public Map<String, Object> delete(@PathVariable Integer id) {
@@ -138,14 +138,14 @@ public class ItemCategoryController {
             boolean success = itemCategoryService.deleteById(id);
             if (success) {
                 result.put("success", true);
-                result.put("message", "删除成功");
+                result.put("message", "Deleted successfully");
             } else {
                 result.put("success", false);
-                result.put("message", "删除失败");
+                result.put("message", "Delete failed");
             }
         } catch (Exception e) {
             result.put("success", false);
-            result.put("message", "删除失败：" + e.getMessage());
+            result.put("message", "Delete failed: " + e.getMessage());
         }
         return result;
     }

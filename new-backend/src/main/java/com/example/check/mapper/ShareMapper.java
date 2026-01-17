@@ -4,51 +4,49 @@ import com.example.check.pojo.Share;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
-
 /**
- * 分享Mapper接口
+ * Share Mapper Interface
  */
 @Mapper
 public interface ShareMapper {
-    
+
     /**
-     * 根据ID查询分享
+     * Get share by ID
      */
     Share selectById(@Param("id") Integer id);
-    
+
     /**
-     * 根据分享码查询分享
+     * Get share by share code
      */
     Share selectByShareCode(@Param("shareCode") String shareCode);
-    
+
     /**
-     * 根据行程ID查询分享
+     * Get share by trip ID
      */
     Share selectByTripId(@Param("tripId") Integer tripId);
-    
+
     /**
-     * 插入分享
+     * Insert share
      */
     int insert(Share share);
-    
+
     /**
-     * 更新分享
+     * Update share
      */
     int update(Share share);
-    
+
     /**
-     * 删除分享
+     * Delete share
      */
     int deleteById(@Param("id") Integer id);
-    
+
     /**
-     * 增加浏览次数
+     * Increment view count
      */
     int incrementViews(@Param("id") Integer id);
-    
+
     /**
-     * 增加分享次数
+     * Increment share count
      */
     int incrementShares(@Param("id") Integer id);
 }
