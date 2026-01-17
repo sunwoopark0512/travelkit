@@ -47,4 +47,17 @@
 - **CLAIM**: "No Evidence, No Claim" is enforced by the system structure. Tasks are not complete without verification.
 - **SOURCE**: `src/agents/orchestrator-sisyphus.ts` lines 463-471
   > "Evidence Requirements... NO EVIDENCE = NOT COMPLETE. SUBAGENTS LIE - VERIFY EVERYTHING."
-- **WHY**: Prevents the "Lazy Agent" problem where tasks are marked done without actual execution. This is the foundation of the "Strict Evidence Bundle".
+- **WHY**: Prevents the "Lazy Agent" problem.
+
+### 3.1 Strict Evidence Bundle (Standard 10 Headers)
+Every PR MUST generate a bundle with these exact headers:
+1. `[EVIDENCE] CHECKS_SNAPSHOT (STRICT)`
+2. `[EVIDENCE] LATEST_RUN_META`
+3. `[EVIDENCE] DIFF_AFTER (Scope)`
+4. `[EVIDENCE] ROLE_CONTRACT_LEDGER_RULE_EXCERPT`
+5. `[EVIDENCE] PROJECT_OVERVIEW_MD`
+6. `[EVIDENCE] PROJECT_LEDGER_MD`
+7. `[EVIDENCE] AIRTABLE_SYNC_LOG`
+8. `[EVIDENCE] STICKY_VERIFY`
+9. `[EVIDENCE] COMMAND_LOG` (Must include Canon/Glossary citations)
+10. `[EVIDENCE] FINAL_VERDICT`
