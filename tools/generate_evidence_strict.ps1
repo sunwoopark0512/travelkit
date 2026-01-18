@@ -72,14 +72,22 @@ if (Test-Path "docs/governance/ROLE_CONTRACT.md") {
 # 5. PROJECT_OVERVIEW_MD
 powershell -File tools/generate_ledger.ps1
 if (Test-Path "outputs/project_overview.md") {
-    Log-Section "PROJECT_OVERVIEW_MD" (Get-Content "outputs/project_overview.md" -Raw -Encoding UTF8)
+    # Sanitize: remove nested [EVIDENCE] headers
+    $OverviewContent = Get-Content "outputs/project_overview.md" -Encoding UTF8 | 
+        Where-Object { $_ -notmatch "^---\s*\[EVIDENCE\]" } | 
+        Out-String
+    Log-Section "PROJECT_OVERVIEW_MD" $OverviewContent
 } else {
     Log-Section "PROJECT_OVERVIEW_MD" "❌ FAIL: project_overview.md not found"
 }
 
 # 6. PROJECT_LEDGER_MD
 if (Test-Path "outputs/project_ledger.md") {
-    Log-Section "PROJECT_LEDGER_MD" (Get-Content "outputs/project_ledger.md" -Raw -Encoding UTF8)
+    # Sanitize: remove nested [EVIDENCE] headers
+    $LedgerContent = Get-Content "outputs/project_ledger.md" -Encoding UTF8 | 
+        Where-Object { $_ -notmatch "^---\s*\[EVIDENCE\]" } | 
+        Out-String
+    Log-Section "PROJECT_LEDGER_MD" $LedgerContent
 } else {
     Log-Section "PROJECT_LEDGER_MD" "❌ FAIL: project_ledger.md not found"
 }
