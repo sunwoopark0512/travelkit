@@ -30,7 +30,6 @@ function Log-Section {
     $Header = "`n--- [EVIDENCE] $Title ---"
     $FullContent = "$Header`n$Content"
     
-    # Write to both files in strict UTF-8
     Write-UTF8 $OutputFile $FullContent
     Write-UTF8 $OracleExcerpt $FullContent
 }
