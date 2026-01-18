@@ -1,3 +1,7 @@
+﻿function Sanitize-EmbeddedEvidence([string]\) {
+    if ([string]::IsNullOrWhiteSpace(\)) { return \ }
+    return \ -replace '--- \[EVIDENCE\]', '--- [LEDGER_EVIDENCE]'
+}
 param(
     [string]$OutputFile = "outputs/evidence_bundle.txt",
     [string]$OracleExcerpt = "outputs/oracle_excerpt.md",
@@ -138,3 +142,4 @@ Log-Section "FINAL_VERDICT" $FinalVerdict
 
 Write-Host "Bundle generated at $OutputFile (UTF-8)" -ForegroundColor Green
 Write-Host "Oracle Excerpt generated at $OracleExcerpt (UTF-8)" -ForegroundColor Green
+
