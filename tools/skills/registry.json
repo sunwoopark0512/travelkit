@@ -1,0 +1,72 @@
+{
+    "version": "1.0.0",
+    "skills": [
+        {
+            "id": "travelkit-strict-evidence",
+            "title": "Strict Evidence (10 headers + FINAL_VERDICT)",
+            "path": ".agent/skills/travelkit-strict-evidence",
+            "description": "Strict Evidence 10 헤더 + FINAL_VERDICT 생성/검증/리그레션 체크에 사용.",
+            "triggers": [
+                "strict evidence",
+                "evidence headers",
+                "final_verdict",
+                "oracle excerpt",
+                "PR comment"
+            ],
+            "scores": {
+                "risk": 2,
+                "evidence": 5,
+                "windows": 5
+            },
+            "scope": {
+                "read_paths": [
+                    "outputs/**",
+                    "docs/**",
+                    "tools/**",
+                    ".agent/skills/**"
+                ],
+                "write_paths": [
+                    "outputs/**"
+                ],
+                "network": false,
+                "shell": true
+            },
+            "source": {
+                "type": "local"
+            }
+        },
+        {
+            "id": "travelkit-gemini-cli",
+            "title": "Gemini CLI (PowerShell-first)",
+            "path": ".agent/skills/travelkit-gemini-cli",
+            "description": "Gemini CLI 설치/인증/헤드리스 실행/PowerShell 함정 방지/가드레일 체크에 사용.",
+            "triggers": [
+                "gemini-cli",
+                "gemini login",
+                "GEMINI_API_KEY",
+                "powershell",
+                "guardrails"
+            ],
+            "scores": {
+                "risk": 3,
+                "evidence": 4,
+                "windows": 5
+            },
+            "scope": {
+                "read_paths": [
+                    "docs/**",
+                    "tools/**",
+                    "outputs/**"
+                ],
+                "write_paths": [
+                    "outputs/**"
+                ],
+                "network": true,
+                "shell": true
+            },
+            "source": {
+                "type": "local"
+            }
+        }
+    ]
+}

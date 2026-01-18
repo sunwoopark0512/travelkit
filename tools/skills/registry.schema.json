@@ -1,0 +1,127 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "TravelKit Skills Registry",
+    "type": "object",
+    "required": [
+        "version",
+        "skills"
+    ],
+    "properties": {
+        "version": {
+            "type": "string"
+        },
+        "skills": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "title",
+                    "path",
+                    "description",
+                    "triggers",
+                    "scores",
+                    "scope"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9-]+$"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "triggers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1
+                    },
+                    "scores": {
+                        "type": "object",
+                        "required": [
+                            "risk",
+                            "evidence",
+                            "windows"
+                        ],
+                        "properties": {
+                            "risk": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 5
+                            },
+                            "evidence": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 5
+                            },
+                            "windows": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 5
+                            }
+                        }
+                    },
+                    "scope": {
+                        "type": "object",
+                        "required": [
+                            "read_paths",
+                            "write_paths",
+                            "network",
+                            "shell"
+                        ],
+                        "properties": {
+                            "read_paths": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "write_paths": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "network": {
+                                "type": "boolean"
+                            },
+                            "shell": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "source": {
+                        "type": "object",
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "local",
+                                    "skillsmp",
+                                    "github"
+                                ]
+                            },
+                            "url": {
+                                "type": "string"
+                            },
+                            "license": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
