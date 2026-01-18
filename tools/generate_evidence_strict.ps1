@@ -1,8 +1,4 @@
-﻿function Sanitize-EmbeddedEvidence([string]\) {
-    if ([string]::IsNullOrWhiteSpace(\)) { return \ }
-    return \ -replace '--- \[EVIDENCE\]', '--- [LEDGER_EVIDENCE]'
-}
-param(
+﻿param(
     [string]$OutputFile = "outputs/evidence_bundle.txt",
     [string]$OracleExcerpt = "outputs/oracle_excerpt.md",
     [int]$PrNumber = 9
@@ -10,6 +6,12 @@ param(
 
 $ErrorActionPreference = "Continue"
 mkdir outputs -Force | Out-Null
+
+# Sanitize function: convert nested [EVIDENCE] headers to [LEDGER_EVIDENCE]
+function Sanitize-EmbeddedEvidence([string]$content) {
+    if ([string]::IsNullOrWhiteSpace($content)) { return $content }
+    return $content -replace '--- \[EVIDENCE\]', '--- [LEDGER_EVIDENCE]'
+}
 
 # Force UTF-8 Encoding helpers
 function Write-UTF8 ($Path, $Content) {
@@ -35,25 +37,34 @@ function Log-Section {
 
 # 1. CHECKS_SNAPSHOT (STRICT)
 try {
-    $Checks = gh pr checks $PrNumber 2>&1
+    $Checks = gh pr checks $PrNumber 2>$null
     $CheckLog = $Checks | Out-String
-    if ($Checks -match "fail") { $CheckStatus = "❌ FAIL" }
-    elseif ($Checks -match "pending") { $CheckStatus = "⏳ PENDING" }
+    if ([string]::IsNullOrWhiteSpace($CheckLog)) {
+        $CheckLog = "No CI checks configured on this branch."
+        $CheckStatus = "✅ PASS (No CI)"
+    } elseif ($CheckLog -match "fail") { $CheckStatus = "❌ FAIL" }
+    elseif ($CheckLog -match "pending") { $CheckStatus = "⏳ PENDING" }
     else { $CheckStatus = "✅ PASS" }
 } catch {
     $CheckLog = "Error fetching checks: $_"
     $CheckStatus = "⚠️ UNKNOWN"
 }
-Log-Section "CHECKS_SNAPSHOT (STRICT)" "$CheckLog`nVerdict: $CheckStatus"
+Log-Section "CHECKS_SNAPSHOT (STRICT)" "$CheckLog`n`nVerdict: $CheckStatus"
 
 # 2. LATEST_RUN_META
 try {
     $PrInfo = gh pr view $PrNumber --json headRefName | ConvertFrom-Json
     $Branch = $PrInfo.headRefName
     $Run = gh run list --branch $Branch --limit 1 --json conclusion,url | ConvertFrom-Json
-    $RunStatus = if ($Run.conclusion -eq "success") { "✅ PASS" } else { "❌ FAIL ($($Run.conclusion))" }
-    Log-Section "LATEST_RUN_META" "Branch: $Branch`nURL: $($Run.url)`nConclusion: $($Run.conclusion)`nVerdict: $RunStatus"
+    if ($Run -and $Run.Count -gt 0) {
+        $RunStatus = if ($Run[0].conclusion -eq "success") { "✅ PASS" } else { "❌ FAIL ($($Run[0].conclusion))" }
+        Log-Section "LATEST_RUN_META" "Branch: $Branch`nURL: $($Run[0].url)`nConclusion: $($Run[0].conclusion)`nVerdict: $RunStatus"
+    } else {
+        $RunStatus = "✅ PASS (No CI runs)"
+        Log-Section "LATEST_RUN_META" "Branch: $Branch`nNo CI runs found.`nVerdict: $RunStatus"
+    }
 } catch {
+    $RunStatus = "⚠️ UNKNOWN"
     Log-Section "LATEST_RUN_META" "Error fetching run meta: $_"
 }
 
@@ -74,12 +85,11 @@ if (Test-Path "docs/governance/ROLE_CONTRACT.md") {
 }
 
 # 5. PROJECT_OVERVIEW_MD
-powershell -File tools/generate_ledger.ps1
+$LedgerOutput = & powershell -File tools/generate_ledger.ps1 2>&1 | Out-String
+Write-Host $LedgerOutput
 if (Test-Path "outputs/project_overview.md") {
-    # Sanitize: remove nested [EVIDENCE] headers
-    $OverviewContent = Get-Content "outputs/project_overview.md" -Encoding UTF8 | 
-        Where-Object { $_ -notmatch "^---\s*\[EVIDENCE\]" } | 
-        Out-String
+    $OverviewRaw = Get-Content "outputs/project_overview.md" -Raw -Encoding UTF8
+    $OverviewContent = Sanitize-EmbeddedEvidence $OverviewRaw
     Log-Section "PROJECT_OVERVIEW_MD" $OverviewContent
 } else {
     Log-Section "PROJECT_OVERVIEW_MD" "❌ FAIL: project_overview.md not found"
@@ -87,29 +97,30 @@ if (Test-Path "outputs/project_overview.md") {
 
 # 6. PROJECT_LEDGER_MD
 if (Test-Path "outputs/project_ledger.md") {
-    # Sanitize: remove nested [EVIDENCE] headers
-    $LedgerContent = Get-Content "outputs/project_ledger.md" -Encoding UTF8 | 
-        Where-Object { $_ -notmatch "^---\s*\[EVIDENCE\]" } | 
-        Out-String
+    $LedgerRaw = Get-Content "outputs/project_ledger.md" -Raw -Encoding UTF8
+    $LedgerContent = Sanitize-EmbeddedEvidence $LedgerRaw
     Log-Section "PROJECT_LEDGER_MD" $LedgerContent
 } else {
     Log-Section "PROJECT_LEDGER_MD" "❌ FAIL: project_ledger.md not found"
 }
 
 # 7. AIRTABLE_SYNC_LOG
-powershell -File tools/update_airtable.ps1
+$AirtableOutput = & powershell -File tools/update_airtable.ps1 2>&1 | Out-String
+Write-Host $AirtableOutput
 if (Test-Path "outputs/airtable_sync.log") {
-    $SyncLog = Get-Content "outputs/airtable_sync.log" -Raw -Encoding UTF8
+    $SyncLogRaw = Get-Content "outputs/airtable_sync.log" -Raw -Encoding UTF8
+    $SyncLog = Sanitize-EmbeddedEvidence $SyncLogRaw
     $SyncVerdict = if ($SyncLog -match "DRY_RUN" -or $SyncLog -match "AIRTABLE_OK") { "✅ PASS (Logged)" } else { "❌ FAIL" }
-    Log-Section "AIRTABLE_SYNC_LOG" "$SyncLog`nVerdict: $SyncVerdict"
+    Log-Section "AIRTABLE_SYNC_LOG" "$SyncLog`n`nVerdict: $SyncVerdict"
 } else {
+    $SyncVerdict = "❌ FAIL"
     Log-Section "AIRTABLE_SYNC_LOG" "❌ FAIL: Log not found"
 }
 
 # 8. STICKY_VERIFY
 $Sticky = powershell -File apps/android/sticky_verify.ps1 -PrNumber $PrNumber 2>&1 | Out-String
 $StickyVerdict = if ($Sticky -match "PASS") { "✅ PASS" } else { "❌ FAIL" }
-Log-Section "STICKY_VERIFY" "$Sticky`nVerdict: $StickyVerdict"
+Log-Section "STICKY_VERIFY" "$Sticky`n`nVerdict: $StickyVerdict"
 
 # 9. COMMAND_LOG
 $Params = @{
@@ -142,5 +153,3 @@ Log-Section "FINAL_VERDICT" $FinalVerdict
 
 Write-Host "Bundle generated at $OutputFile (UTF-8)" -ForegroundColor Green
 Write-Host "Oracle Excerpt generated at $OracleExcerpt (UTF-8)" -ForegroundColor Green
-
-
