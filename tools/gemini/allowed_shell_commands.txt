@@ -1,0 +1,31 @@
+# Gemini CLI Allowed Shell Commands
+# One command per line (prefix match). Keep this list small and intentional.
+# TravelKit × OpenCode × ULW × Oracle
+
+# Git commands
+git status
+git diff
+git log
+git show
+git rev-parse
+git ls-files
+git grep
+
+# GitHub CLI
+gh pr view
+gh pr comment
+
+# PowerShell
+powershell -NoProfile
+pwsh -NoProfile
+
+# Node/npm
+node --version
+npm --version
+npm install -g @google/gemini-cli
+
+# Makefile targets
+make gemini-docs
+make gemini-guardrail-check
+make gemini-experiment
+make evidence
