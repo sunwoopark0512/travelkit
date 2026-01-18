@@ -143,3 +143,4 @@ Log-Section "FINAL_VERDICT" $FinalVerdict
 Write-Host "Bundle generated at $OutputFile (UTF-8)" -ForegroundColor Green
 Write-Host "Oracle Excerpt generated at $OracleExcerpt (UTF-8)" -ForegroundColor Green
 
+
