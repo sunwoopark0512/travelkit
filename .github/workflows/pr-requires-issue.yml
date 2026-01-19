@@ -1,0 +1,18 @@
+name: PR requires linked Issue
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+
+jobs:
+  require-linked-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body for issue linkage
+        shell: bash
+        run: |
+          BODY="${{ github.event.pull_request.body }}"
+          echo "Checking PR body for Closes/Fixes reference..."
+          echo "$BODY" | grep -Eiq '(Closes|Fixes)\s+#([0-9]+)' && exit 0
+          echo "ERROR: PR body must include 'Closes #N' or 'Fixes #N'."
+          exit 1
