@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gate-report
-          path: apps/android/_gate_report.md
+          path: skills/misc_tools/src/_gate_report.md
       
       # Now fail the job if the gate failed, AFTER creating artifact
       - name: Check Gate Status
@@ -62,4 +62,5 @@ jobs:
         with:
           header: oracle-final-gate
           path: _gate_report.md
+
 
