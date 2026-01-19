@@ -12,3 +12,12 @@ This repo contains reusable "skills" modules.
   - How to run (Windows PowerShell + bash if applicable)
   - Required env vars (names only; never store secrets)
   - Safety note: no Secrets/Token/PII
+
+## Auto-added (REFACTOR-002)
+
+- [gemini_cli_onboarding](../skills/gemini_cli_onboarding/skill.md)
+- [github_governance](../skills/github_governance/skill.md)
+- [repo_refactor](../skills/repo_refactor/skill.md)
+
+- Candidates report: [SKILLS_MOVE_CANDIDATES](./SKILLS_MOVE_CANDIDATES_15.md)
+
