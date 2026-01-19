@@ -36,3 +36,7 @@ This repo contains reusable "skills" modules.
 - [physics](../skills/physics_problem_generator/skill.md)
 
 - [common/OpenResponses](../skills/common/OpenResponses.psm1)
+
+## Web Ingest
+- [fetch](../skills/web_ingest_fetch/skill.md)
+
