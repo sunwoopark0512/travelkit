@@ -19,5 +19,6 @@ This repo contains reusable "skills" modules.
 - [github_governance](../skills/github_governance/skill.md)
 - [repo_refactor](../skills/repo_refactor/skill.md)
 
-- Candidates report: [SKILLS_MOVE_CANDIDATES](./SKILLS_MOVE_CANDIDATES_15.md)
+- Candidates report: [SKILLS_MOVE_CANDIDATES](./SKILLS_MOVE_CANDIDATES_31.md)
+
 
