@@ -30,3 +30,7 @@ This repo contains reusable "skills" modules.
 - [github_governance](../skills/github_governance/skill.md)
 - [repo_refactor](../skills/repo_refactor/skill.md)
 - [misc_tools](../skills/misc_tools/skill.md)
+
+## LEARN-001 Keys
+- [astro](../skills/astro_data_fetch/skill.md)
+- [physics](../skills/physics_problem_generator/skill.md)
