@@ -34,3 +34,5 @@ This repo contains reusable "skills" modules.
 ## LEARN-001 Keys
 - [astro](../skills/astro_data_fetch/skill.md)
 - [physics](../skills/physics_problem_generator/skill.md)
+
+- [common/OpenResponses](../skills/common/OpenResponses.psm1)

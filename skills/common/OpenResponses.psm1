@@ -1,12 +1,19 @@
-﻿# OpenResponses.psm1 - Standard LLM Interface
-function Invoke-OpenResponse {
-    param([string]$Provider="Mock", [string]$SystemPrompt, [string]$UserPrompt, [string]$OutputSchema="text")
-    $ts=(Get-Date).ToString("s")
-    if ($Provider -eq "Mock") {
-        Write-Host "[OpenResponses] Mock Provider" -ForegroundColor Cyan
-        $content = if ($OutputSchema -eq "json") { '[{"id":1,"question":"(Mock) Q","answer":"A","explanation":"Exp","rubric":{}}]' } else { "(Mock) Text" }
-        return [PSCustomObject]@{ Content=$content; Usage=@{T=0}; Provider="Mock"; Timestamp=$ts }
-    }
-    Throw "Provider invalid: $Provider"
+﻿Set-StrictMode -Version Latest
+function Invoke-OpenResponses {
+  [CmdletBinding()]
+  param([string]$Task, [hashtable]$Input, [string]$Provider = $env:OPENRESPONSES_PROVIDER)
+  if ([string]::IsNullOrWhiteSpace($Provider)) { $Provider = "mock" }
+  if ($Provider -eq "mock") {
+      $ts = (Get-Date).ToString("s")
+      if ($Task -eq "generate") {
+          $cnt = if ($Input.count) { [int]$Input.count } else { 3 }
+          $items = 1..$cnt | ForEach-Object { @{
+             id=$_; topic=$Input.topic; question="Mock Q$_"; answer="Mock A$_"; rubric=@{accuracy="bool"}
+          }}
+          return @{ provider="mock"; output=$items; ts=$ts }
+      }
+      return @{ provider="mock"; output=@{verdict="PASS"}; ts=$ts }
+  }
+  throw "Unknown Provider: $Provider"
 }
-Export-ModuleMember -Function Invoke-OpenResponse
+Export-ModuleMember -Function Invoke-OpenResponses
