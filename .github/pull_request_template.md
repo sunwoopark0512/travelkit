@@ -1,14 +1,21 @@
-# PR Summary
-<!-- Briefly describe the changes. -->
+﻿## Related Issue
+Closes #<ISSUE_NUMBER>
 
-## Changes
-- [ ] List key changes here
+## Summary
+- (What changed? Why?)
 
-## Verification (Oracle Gate)
-> This PR is governed by `apps/android/gate.ps1`.
-> Please define the verification status below.
+## Change Type
+- [ ] Docs
+- [ ] Feature
+- [ ] Fix
+- [ ] Refactor
+- [ ] CI/CD
+- [ ] Chore
 
-- [ ] `powershell -NoProfile -File apps/android/gate.ps1` -> **PASS**
+## Validation
+- [ ] check gh run list or CI
+- [ ] No secrets/tokens/PII added anywhere
+- [ ] Acceptance Criteria in the linked Issue are satisfied
 
-## Risks
-- [ ] Low / Medium / High
+## Notes (optional)
+- (Anything reviewers should know)
