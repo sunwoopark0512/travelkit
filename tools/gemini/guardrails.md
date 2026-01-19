@@ -1,4 +1,4 @@
-# Gemini CLI Guardrails (TravelKit/OpenCode)
+﻿# Gemini CLI Guardrails (TravelKit/OpenCode)
 
 > These rules apply whenever Gemini CLI is used as a terminal agent in this repo.
 
@@ -78,5 +78,6 @@
 ```bash
 make gemini-guardrail-check
 # OR
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/gemini/validate_guardrails.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File skills/gemini_cli_onboarding/src/validate_guardrails.ps1
 ```
+

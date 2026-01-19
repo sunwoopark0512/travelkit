@@ -1,4 +1,4 @@
-# TravelKit Makefile
+﻿# TravelKit Makefile
 # Gemini CLI + OpenCode Governance Automation
 
 .PHONY: help gemini-docs gemini-guardrail-check gemini-experiment evidence
@@ -24,7 +24,7 @@ gemini-docs:
 # Gemini CLI: Run guardrail validation
 gemini-guardrail-check:
 	@echo "=== Gemini CLI Guardrail Check ==="
-	@powershell -NoProfile -ExecutionPolicy Bypass -File tools/gemini/validate_guardrails.ps1
+	@powershell -NoProfile -ExecutionPolicy Bypass -File skills/gemini_cli_onboarding/src/validate_guardrails.ps1
 
 # Gemini CLI: Show 48h experiment checklist
 gemini-experiment:
@@ -53,3 +53,4 @@ else
 	@echo "=== Generating Strict Evidence for PR $(PR) ==="
 	@powershell -NoProfile -ExecutionPolicy Bypass -File tools/generate_evidence_strict.ps1 -PrNumber $(PR) -OutputFile "outputs/evidence_bundle_pr$(PR).txt" -OracleExcerpt "outputs/oracle_excerpt_pr$(PR).md"
 endif
+
