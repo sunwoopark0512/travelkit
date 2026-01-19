@@ -31,7 +31,7 @@ $inputParams = @{
 Write-Host "Invoking GenAI... (KB Len: $($contextStr.Length))"
 
 # Call OpenResponses
-$res = Invoke-OpenResponses -Task "generate" -Input $inputParams
+$res = Invoke-OpenResponses -Task "generate" -InputData $inputParams
 
 if ($res -and $res.output) {
     $res.output | ForEach-Object { $_ | ConvertTo-Json -Compress } | Out-File -Encoding utf8 $Out

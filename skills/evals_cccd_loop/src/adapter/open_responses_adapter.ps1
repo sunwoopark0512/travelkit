@@ -7,6 +7,6 @@ if ($t -is [System.Collections.IDictionary]) {
 } else {
     $t.PSObject.Properties | ForEach-Object { $ht[$_.Name] = $_.Value }
 }
-$res = Invoke-OpenResponses -Task $Task -Input $ht
+$res = Invoke-OpenResponses -Task $Task -InputData $ht
 $res | ConvertTo-Json -Depth 8 | Out-File -Encoding utf8 $OutJson
 Write-Host "OK: $OutJson"
