@@ -22,3 +22,11 @@ This repo contains reusable "skills" modules.
 - Candidates report: [SKILLS_MOVE_CANDIDATES](./SKILLS_MOVE_CANDIDATES_31.md)
 
 
+
+
+## Skills List (Updated)
+
+- [gemini_cli_onboarding](../skills/gemini_cli_onboarding/skill.md)
+- [github_governance](../skills/github_governance/skill.md)
+- [repo_refactor](../skills/repo_refactor/skill.md)
+- [misc_tools](../skills/misc_tools/skill.md)

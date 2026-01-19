@@ -1,29 +1,17 @@
 ﻿# github_governance
 
 ## Purpose
-- (What this skill does)
-
-## Inputs
-- (files/args)
-
-## Outputs
-- (artifacts/logs)
+- Moved files: governance_mcp.js verify_governance.ps1
 
 ## How to run
-
 ### Windows PowerShell
 `powershell
-# example
-``
-
+.\skills\github_governance\src\verify_governance.ps1
+`
 ### Bash
-
 `ash
-# example
+# PowerShell script: pwsh ./skills/github_governance/src/verify_governance.ps1
 `
 
-## Env vars (names only)
-* (e.g., SOME_API_KEY)  **never commit secrets**
-
-## Security / Privacy
-* Do **NOT** include secrets/tokens/API keys/passwords/PII.
+## Security
+- No secrets.

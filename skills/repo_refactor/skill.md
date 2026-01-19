@@ -1,29 +1,17 @@
 ﻿# repo_refactor
 
 ## Purpose
-- (What this skill does)
-
-## Inputs
-- (files/args)
-
-## Outputs
-- (artifacts/logs)
+- Moved files: .eslintrc.js travel-item-inspection-system__.eslintrc.js
 
 ## How to run
-
 ### Windows PowerShell
 `powershell
-# example
-``
-
+# TODO: add real command(s)
+`
 ### Bash
-
 `ash
-# example
+# TODO: add real command(s)
 `
 
-## Env vars (names only)
-* (e.g., SOME_API_KEY)  **never commit secrets**
-
-## Security / Privacy
-* Do **NOT** include secrets/tokens/API keys/passwords/PII.
+## Security
+- No secrets.
