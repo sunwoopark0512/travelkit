@@ -1,4 +1,9 @@
-﻿Set-StrictMode -Version Latest
+﻿# =============================================================================
+# OpenResponses.psm1
+# SSoT Rule: Always use '-InputData' parameter.
+#            Do NOT use '-Input' (reserved automatic variable).
+# =============================================================================
+Set-StrictMode -Version Latest
 function Invoke-OpenResponses {
   [CmdletBinding()]
   param(
@@ -36,3 +41,4 @@ function Invoke-OpenResponses {
   }
 }
 Export-ModuleMember -Function Invoke-OpenResponses
+
