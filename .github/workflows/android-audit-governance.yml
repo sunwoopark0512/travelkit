@@ -1,4 +1,4 @@
-name: Android Audit Governance
+﻿name: Android Audit Governance
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
         continue-on-error: true
         run: |
           cd apps/android
-          ./gate.ps1
+          ../../skills/misc_tools/src/gate.ps1
           # Capture exit code explicitly if needed for logic, 
           # but continue-on-error handles the step status.
       
@@ -62,3 +62,4 @@ jobs:
         with:
           header: oracle-final-gate
           path: _gate_report.md
+

@@ -1,4 +1,4 @@
----
+﻿---
 description: "Gemini CLI 설치/인증/헤드리스 실행/안전한 PS 리다이렉션/금지 패턴 방지에 사용"
 ---
 
@@ -168,7 +168,7 @@ if ($LASTEXITCODE -ne 0) {
 | make 타겟 | PowerShell 동등 명령 |
 |----------|---------------------|
 | `make gemini-docs` | `Select-String -Path 'docs/gemini-cli.md' -Pattern '^## '` |
-| `make gemini-guardrail-check` | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/gemini/validate_guardrails.ps1` |
+| `make gemini-guardrail-check` | `powershell -NoProfile -ExecutionPolicy Bypass -File skills/gemini_cli_onboarding/src/validate_guardrails.ps1` |
 | `make gemini-experiment` | 아래 스크립트 참조 |
 | `make evidence PR=N` | `powershell -File tools/generate_evidence_strict.ps1 -PrNumber N` |
 
@@ -194,3 +194,4 @@ Write-Host "- [ ] FINAL_VERDICT contains 'Verdict: PASS'"
 | `Authentication failed` | `$env:GEMINI_API_KEY` 설정 확인 |
 | PowerShell 스크립트 실행 오류 | `-NoProfile -ExecutionPolicy Bypass` 추가 |
 | 출력 깨짐 | `Out-File -Encoding utf8` 사용 |
+

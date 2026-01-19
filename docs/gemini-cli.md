@@ -1,4 +1,4 @@
-# Gemini CLI Integration Guide
+﻿# Gemini CLI Integration Guide
 
 > TravelKit × OpenCode × ULW × Oracle 프로젝트를 위한 로컬 터미널 AI 에이전트 가이드
 
@@ -104,7 +104,7 @@ Do not change code outside docs/**, tools/**, outputs/**.
 |------|------|
 | `tools/gemini/guardrails.md` | 사람용 규칙 |
 | `tools/gemini/allowed_shell_commands.txt` | 허용 명령어 목록 |
-| `tools/gemini/validate_guardrails.ps1` | 검증 스크립트 |
+| `skills/gemini_cli_onboarding/src/validate_guardrails.ps1` | 검증 스크립트 |
 
 ### Non-negotiables
 
@@ -268,7 +268,7 @@ gemini
 | make 타겟 | PowerShell 동등 명령 |
 |----------|---------------------|
 | `make gemini-docs` | `Select-String -Path 'docs/gemini-cli.md' -Pattern '^## '` |
-| `make gemini-guardrail-check` | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/gemini/validate_guardrails.ps1` |
+| `make gemini-guardrail-check` | `powershell -NoProfile -ExecutionPolicy Bypass -File skills/gemini_cli_onboarding/src/validate_guardrails.ps1` |
 | `make gemini-experiment` | 아래 스크립트 참조 |
 | `make evidence PR=N` | `powershell -NoProfile -ExecutionPolicy Bypass -File tools/generate_evidence_strict.ps1 -PrNumber N` |
 
@@ -314,3 +314,4 @@ Write-Host "- [ ] FINAL_VERDICT contains 'Verdict: PASS'"
 
 - [Gemini CLI GitHub](https://github.com/google-gemini/gemini-cli)
 - [Official Docs](https://github.com/google-gemini/gemini-cli/tree/main/docs)
+

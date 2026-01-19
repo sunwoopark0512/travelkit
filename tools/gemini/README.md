@@ -1,4 +1,4 @@
-# Gemini CLI Tools
+﻿# Gemini CLI Tools
 
 Gemini CLI 운영을 위한 가드레일 및 검증 도구 모음.
 
@@ -19,7 +19,7 @@ tools/gemini/
 ```bash
 make gemini-guardrail-check
 # 또는
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/gemini/validate_guardrails.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File skills/gemini_cli_onboarding/src/validate_guardrails.ps1
 ```
 
 ### 문서 확인
@@ -32,3 +32,4 @@ make gemini-docs
 
 - [Gemini CLI 통합 가이드](../../docs/gemini-cli.md)
 - [OpenCode Canon v1](../../docs/opencode/opencode_canon_v1.md)
+
