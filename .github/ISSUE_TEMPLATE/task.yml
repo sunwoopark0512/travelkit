@@ -1,0 +1,82 @@
+name: "Task"
+description: "표준 Task 템플릿 (GitHub Issues = SSoT)"
+title: "AREA-###: <짧은 제목>"
+labels:
+  - "status:backlog"
+  - "priority:p1"
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 헌법 (필수)
+        - 모든 작업 지시는 GitHub Issue로만 존재한다.
+        - 상태 전이는 라벨로만 한다: backlog/doing/done/blocked.
+        - Task는 Acceptance Criteria를 PASS/FAIL로 판정 가능해야 한다.
+        - 쉘 실행/토큰/키/개인정보는 Issue/PR/로그에 절대 노출하지 않는다.
+        - 규칙 변경은 type:governance 이슈로만 제안한다.
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Agent
+      description: "담당 에이전트 라벨과 일치해야 합니다."
+      options:
+        - "agent:chatgpt"
+        - "agent:opencode"
+        - "agent:antigravity"
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - "type:design"
+        - "type:governance"
+        - "type:architecture"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "무엇을 왜 하는가 (1~8줄). 모호한 표현 금지."
+      placeholder: "예) n8n Workflow를 구현하지 않고 설계만 진행한다..."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria (PASS/FAIL 가능하게)
+      description: "체크박스 형태로, 검증 가능한 문장만."
+      value: |
+        - [ ] (PASS/FAIL) ...
+        - [ ] (PASS/FAIL) ...
+        - [ ] (PASS/FAIL) ...
+    validations:
+      required: true
+  - type: textarea
+    id: outputs
+    attributes:
+      label: Output Artifact
+      description: "산출물 파일/문서 명칭을 명확히 (v 포함)."
+      placeholder: "예) Task Authoring Rules v1 (docs/task_authoring_rules.md)"
+    validations:
+      required: true
+  - type: textarea
+    id: trigger
+    attributes:
+      label: Trigger to Start
+      description: "언제 시작하는지(조건/게이트)."
+      placeholder: "예) Template Workspace 구조가 고정되었을 때"
+    validations:
+      required: true
+  - type: checkboxes
+    id: security
+    attributes:
+      label: Security / Guardrails
+      options:
+        - label: "Secrets/Keys/PII를 본문/로그/스크린샷에 포함하지 않았다."
+          required: true
+        - label: "쉘 커맨드가 필요하면 사전 승인(HITL) 지점을 명시했다."
+          required: true
