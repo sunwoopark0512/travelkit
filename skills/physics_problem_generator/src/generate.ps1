@@ -5,25 +5,37 @@
     [string]$Out="data/learn/problems.jsonl",
     [string]$KB=""
 )
+$ErrorActionPreference = "Stop"
 Import-Module "$PSScriptRoot/../../common/OpenResponses.psm1" -Force
 
-$context = ""
+$contextStr = ""
 if ($KB -and (Test-Path $KB)) {
     try {
-        $recs = Get-Content $KB | ConvertFrom-Json
-        # Take first 3 chunks as context (simple RAG stub)
+        $recs = Get-Content $KB -Encoding UTF8 -ErrorAction SilentlyContinue | ConvertFrom-Json
         if ($recs) {
-            $txt = $recs | Select-Object -First 3 -ExpandProperty content
-            $context = "Context: $txt"
+            # Robust join
+            $txtList = @($recs | Select-Object -First 3 | ForEach-Object { $_.content })
+            $txt = $txtList -join "
+"
+            $contextStr = "Context: $txt"
         }
-    } catch {
-        Write-Warning "Failed to read KB: $_"
-    }
+    } catch { Write-Warning "KB Read Fail: $_" }
 }
 
-$sysPrompt = "Generate $Count problems for $Topic. $context"
-# Pass system prompt if module supports it, or just use it in topic
-$res = Invoke-OpenResponses -Task "generate" -Input @{ topic="$Topic ($context)"; count=$Count }
+# Explicit hashtable for PS 5.1 compatibility
+$inputParams = @{ 
+    topic = "$Topic"
+    count = $Count
+}
 
-$res.output | ForEach-Object { $_ | ConvertTo-Json -Compress } | Out-File -Encoding utf8 $Out
-Write-Host "OK: $Out (ContextLen: $(.Length))"
+Write-Host "Invoking GenAI... (KB Len: $($contextStr.Length))"
+
+# Call OpenResponses
+$res = Invoke-OpenResponses -Task "generate" -Input $inputParams
+
+if ($res -and $res.output) {
+    $res.output | ForEach-Object { $_ | ConvertTo-Json -Compress } | Out-File -Encoding utf8 $Out
+    Write-Host "SUCCESS: Problems saved to $Out"
+} else {
+    throw "Empty response from OpenResponses"
+}
