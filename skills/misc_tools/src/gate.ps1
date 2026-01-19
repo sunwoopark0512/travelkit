@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Automated Oracle Gate for Android Governance.
     Orchestrates Evidence 1-4 generation and reporting.
@@ -14,7 +14,7 @@
 $ErrorActionPreference = "Stop"
 
 # --- Configuration ---
-$ReportFile = Join-Path $PSScriptRoot "_gate_report.md"
+$ReportFile = Join-Path (Get-Location) "_gate_report.md"
 $AllowlistFile = Join-Path $PSScriptRoot "audit_allowlist_globs.txt"
 
 # --- Helper: Write to Report ---
@@ -139,3 +139,4 @@ else {
 Add-Report ""
 Add-Report "🚀 **Oracle Gate: ALL PASSED**"
 Write-Host "Gate finished successfully. Report saved to $ReportFile" -ForegroundColor Green
+
