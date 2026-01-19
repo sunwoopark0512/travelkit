@@ -1,15 +1,10 @@
 ﻿param([string]$TextDir="data/ingest/text", [string]$OutKB="data/learn/kb.jsonl")
-$outDir = Split-Path $OutKB -Parent
-if (-not (Test-Path $outDir)) { New-Item -Force -ItemType Directory $outDir | Out-Null }
-if (-not (Test-Path $TextDir)) { Write-Warning "No text dir"; return }
-
-$rows = Get-ChildItem $TextDir -Filter *.txt | ForEach-Object {
-    @{
-        id = $_.BaseName
-        content = (Get-Content $_.FullName -Raw).Trim()
-        source = "web"
-        ts = (Get-Date).ToString("s")
-    }
+$p = Split-Path $OutKB -Parent; New-Item -Force -ItemType Directory $p | Out-Null
+if (Test-Path $OutKB) { Remove-Item $OutKB -Force }
+Get-ChildItem $TextDir -Filter *.txt | ForEach {
+  $c = (Get-Content $_.FullName -Raw).Trim()
+  if ($c) {
+    @{id=$_.BaseName; source="web"; content=$c; ts=(Get-Date).ToString("s")} | ConvertTo-Json -Compress | Add-Content -Encoding UTF8 $OutKB
+  }
 }
-$rows | ForEach-Object { $_ | ConvertTo-Json -Compress } | Out-File -Encoding utf8 $OutKB
-Write-Host "Packed KB: $OutKB"
+Write-Host "Packed: $OutKB"
