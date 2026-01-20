@@ -81,7 +81,15 @@ def process_row(worksheet, row_data, verify=False, tail=10):
             return "SKIP"
 
     worksheet.append_row(row_data)
-    print(f"SUCCESS: Appended row -> {title}")  # Print Title
+    printed_title = None
+    try:
+        if isinstance(row_data, (list, tuple)) and len(row_data) > 1:
+            printed_title = row_data[1]
+        elif isinstance(row_data, dict):
+            printed_title = row_data.get("title")
+    except Exception:
+        printed_title = None
+    print(f"SUCCESS: Appended row -> {printed_title}")  # Print Title
     
     if verify:
         last_row = worksheet.get_all_values()[-1]
@@ -189,6 +197,7 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 
 
