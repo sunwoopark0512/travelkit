@@ -36,6 +36,11 @@ credentials.json
 # evidence allowlist (commit only outputs/evidence, keep other outputs ignored)
 outputs/
 outputs/**
+
+
+# evidence allowlist (commit only outputs/evidence, keep other outputs ignored)
+outputs/
+outputs/**
 !outputs/
 !outputs/evidence/
 !outputs/evidence/**
