@@ -30,6 +30,12 @@ outputs/
 # secrets
 credentials.json
 
-# evidence allowlist
-!outputs/evidence/**
 
+
+
+# evidence allowlist (commit only outputs/evidence, keep other outputs ignored)
+outputs/
+outputs/**
+!outputs/
+!outputs/evidence/
+!outputs/evidence/**
