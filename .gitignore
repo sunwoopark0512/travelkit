@@ -44,3 +44,9 @@ outputs/**
 !outputs/
 !outputs/evidence/
 !outputs/evidence/**
+
+# local temp (do not commit)
+apps-script-samples/
+temp_gsheetlogger/
+temp_repo/
+
