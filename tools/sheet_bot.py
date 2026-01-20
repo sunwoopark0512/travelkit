@@ -108,14 +108,14 @@ def main():
         with open(args.json, 'r', encoding='utf-8-sig') as f:
             data = json.load(f) # Expect verification that it is a list
             for entry in data:
-                k = compute_idem_key(entry.get('Title'), entry.get('Body'))
+                k = compute_idem_key(entry.get('Title') or entry.get('title'), entry.get('Body') or entry.get('body'))
                 ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 rows_to_process.append([ts, entry.get('Title'), entry.get('Body', ''), k])
     elif args.csv:
         with open(args.csv, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for entry in reader:
-                k = compute_idem_key(entry.get('Title'), entry.get('Body'))
+                k = compute_idem_key(entry.get('Title') or entry.get('title'), entry.get('Body') or entry.get('body'))
                 ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 rows_to_process.append([ts, entry.get('Title'), entry.get('Body', ''), k])
     elif args.title:
@@ -168,5 +168,7 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
 
 
