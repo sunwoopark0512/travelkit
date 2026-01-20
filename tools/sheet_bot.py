@@ -80,6 +80,15 @@ def process_row(worksheet, row_data, verify=False, tail=10):
             print(f"SKIP: Duplicate Idempotency Key: {current_key}")
             return "SKIP"
 
+    if not globals().get("DEBUG_ROW_DATA_ONCE"):
+
+
+        globals()["DEBUG_ROW_DATA_ONCE"] = True
+
+
+        print(f"DEBUG_ROW_DATA(len={len(row_data)}): {row_data}")
+
+
     worksheet.append_row(row_data)
     printed_title = None
     try:
@@ -139,14 +148,16 @@ def main():
             for entry in data:
                 k = (normalize_entry(entry).get('idem_key') or compute_idem_key(normalize_entry(entry).get('title'), normalize_entry(entry).get('body')))
                 ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                rows_to_process.append([ts, entry.get('Title'), entry.get('Body', ''), k])
+                n = normalize_entry(entry)
+            rows_to_process.append([ts, n.get('title') or '', n.get('body') or '', k])
     elif args.csv:
         with open(args.csv, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
             for entry in reader:
                 k = (normalize_entry(entry).get('idem_key') or compute_idem_key(normalize_entry(entry).get('title'), normalize_entry(entry).get('body')))
                 ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                rows_to_process.append([ts, entry.get('Title'), entry.get('Body', ''), k])
+                n = normalize_entry(entry)
+            rows_to_process.append([ts, n.get('title') or '', n.get('body') or '', k])
     elif args.title:
         k = args.idem_key if args.idem_key else compute_idem_key(args.title, args.body)
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -197,6 +208,7 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 
 
