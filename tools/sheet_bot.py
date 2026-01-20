@@ -36,6 +36,27 @@ def compute_idem_key(title, body):
     raw = f"{t}|{b}".encode('utf-8')
     return hashlib.sha1(raw).hexdigest()
 
+def _get_any(d, *keys):
+    # dict에서 키 후보들을 순서대로 찾고, 없으면 case-insensitive로도 찾는다
+    if d is None:
+        return ""
+    for k in keys:
+        if k in d and d[k] is not None:
+            return str(d[k]).strip()
+    lk = {str(k).strip().lower(): k for k in d.keys()}
+    for k in keys:
+        kk = str(k).strip().lower()
+        if kk in lk and d[lk[kk]] is not None:
+            return str(d[lk[kk]]).strip()
+    return ""
+
+def normalize_entry(d):
+    idem = _get_any(d, "idem_key", "IDEM_KEY", "idemKey", "idempotency_key", "IdemKey")
+    title = _get_any(d, "title", "Title", "TITLE")
+    body  = _get_any(d, "body", "Body", "BODY")
+    return {"idem_key": idem, "title": title, "body": body}
+
+
 def ensure_tab(sheet, tab_name):
     try:
         ws = sheet.worksheet(tab_name)
@@ -168,6 +189,7 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 
 
