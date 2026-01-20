@@ -81,7 +81,7 @@ def process_row(worksheet, row_data, verify=False, tail=10):
             return "SKIP"
 
     worksheet.append_row(row_data)
-    print(f"SUCCESS: Appended row -> {row_data[1]}") # Print Title
+    print(f"SUCCESS: Appended row -> {title}")  # Print Title
     
     if verify:
         last_row = worksheet.get_all_values()[-1]
@@ -189,6 +189,7 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 
 
