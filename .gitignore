@@ -1,4 +1,4 @@
-###################
+﻿###################
 # TravelKit Ignore
 ###################
 
@@ -22,3 +22,14 @@ build/
 bin/
 target/
 outputs/
+
+# secrets
+
+# secrets
+
+# secrets
+credentials.json
+
+# evidence allowlist
+!outputs/evidence/**
+
