@@ -52,8 +52,8 @@ def _get_any(d, *keys):
 
 def normalize_entry(d):
     idem = _get_any(d, "idem_key", "IDEM_KEY", "idemKey", "idempotency_key", "IdemKey")
-    title = _get_any(d, "title", "Title", "TITLE")
-    body  = _get_any(d, "body", "Body", "BODY")
+    title = _get_any(d, "title", "Title", "TITLE", "Subject", "Head", "HEAD", "Topic")
+    body  = _get_any(d, "body", "Body", "BODY", "Content", "Description", "Desc", "Text")
     return {"idem_key": idem, "title": title, "body": body}
 
 
@@ -189,6 +189,7 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 
 
