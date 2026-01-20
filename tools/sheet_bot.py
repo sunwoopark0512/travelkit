@@ -105,7 +105,7 @@ def main():
 
     # Prepare Data
     if args.json:
-        with open(args.json, 'r', encoding='utf-8') as f:
+        with open(args.json, 'r', encoding='utf-8-sig') as f:
             data = json.load(f) # Expect verification that it is a list
             for entry in data:
                 k = compute_idem_key(entry.get('Title'), entry.get('Body'))
@@ -168,4 +168,5 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
