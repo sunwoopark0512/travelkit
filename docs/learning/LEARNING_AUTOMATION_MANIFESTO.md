@@ -16,6 +16,12 @@ We define "Understanding" not as reading, but as the ability to:
   - `Judgment` docs teach you *what to choose*.
   - Do not mix them.
 
+### Cross-Platform Note
+When validating file creation on Windows PowerShell, use `New-Item` instead of `mkdir -p`:
+```powershell
+New-Item -ItemType Directory -Force -Path docs/learning/_templates,docs/learning/examples,scripts,outputs | Out-Null
+```
+
 ## 3. Versioning Policy
 - **Semantic Versioning**: 1.0.0 (Concept change), 1.1.0 (Clarification), 1.0.1 (Typo).
 - **Change Log**: Every automated system relies on these docs. 
