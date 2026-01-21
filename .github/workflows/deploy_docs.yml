@@ -40,6 +40,12 @@ jobs:
           # Check if README changed (informational, or we could commit)
           git diff README.md
 
+      - name: Generate Gold QA
+        run: |
+          python scripts/generate_gold_qa.py
+          # Optional: verifying outputs exist
+          ls -l outputs/
+
       - name: Export Iterations to Docs
         run: |
           python scripts/export_iterations.py
