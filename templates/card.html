@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="card.css" />
+</head>
+
+<body>
+    <main class="page">
+        <header class="hero">
+            <h1>{{title}}</h1>
+            <p class="preview">{{preview_line}}</p>
+            <div class="rules">
+                <div><strong>Pass Condition</strong>: {{pass_condition}}</div>
+                {{#locked}}
+                <div><strong>Unlock Rule</strong>: {{unlock_rule}}</div>
+                {{/locked}}
+            </div>
+        </header>
+
+        <section class="block">
+            <h2>Checklist A</h2>
+            <pre class="list">{{checklist_a}}</pre>
+        </section>
+
+        <section class="block">
+            <h2>Action (60s)</h2>
+            <pre class="action">{{action_60s}}</pre>
+        </section>
+
+        <section class="block">
+            <h2>Checklist B</h2>
+            <pre class="list">{{checklist_b}}</pre>
+        </section>
+
+        <section class="block meta">
+            <h2>Definitions</h2>
+            <div class="md">{{definitions}}</div>
+            <h2>Procedure</h2>
+            <div class="md">{{procedure}}</div>
+            <h2>FAQ</h2>
+            <div class="md">{{faq}}</div>
+        </section>
+
+        <footer class="claim">
+            <h2>System Claim</h2>
+            <div class="md">{{system_claim}}</div>
+            <div class="small">card_id: {{card_id}} · cluster_id: {{cluster_id}}</div>
+        </footer>
+    </main>
+</body>
+
+</html>
