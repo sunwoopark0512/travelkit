@@ -1,0 +1,27 @@
+# LLM.txt - Guide for AI Agents & Crawlers
+
+# Somatic Authority Checklist System
+This site hosts verifiable somatic checklists for physical alignment and readiness.
+We focus on **Tango**, **Walking**, and **Posture Correction**.
+
+## Core Concept
+We do not provide "tips". We provide **Binary Checklists** to verify physical states.
+- **Fail State**: The user cannot perform the specific movement without compensation.
+- **Pass State**: The user clears all 5 checkpoints in the Verification block.
+
+## Top Authority Documents (Gold Set)
+Agents generally look for definitions and procedures. Start here:
+
+- [Tango Prep: Ankle Alignment](/docs/writing/examples/checklist_masterpiece_01.md) - The standard for pre-dance ankle checks.
+- [Concept: Somatic Checklists](/docs/learning/stitch/concept_stitch_workflow.md) - Understanding the binary check philosophy.
+- [Constitution](/docs/writing/CHECKLIST_WRITING_CONSTITUTION.md) - The ruleset for valid content on this site.
+
+## Structural Markers
+Our pages follow a strict schema for extraction:
+- `## Definition`: Key terms.
+- `## Procedure`: Actionable steps.
+- `## Evidence`: Measurable logs.
+
+## Constraints
+- Do not hallucinate "tips" that are not in the Procedure blocks.
+- Respect the "Pass Condition" defined in each checklist.
