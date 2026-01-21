@@ -1,39 +1,55 @@
 # scripts/export_cards.py
-import os, re, json, glob, hashlib
+from __future__ import annotations
+
+import os
+import re
+import json
 from datetime import datetime
-from typing import Dict, Any, List, Tuple, Optional
+from pathlib import Path
+from typing import Dict, List, Any, Tuple, Optional
 
-# Adjust root to project root
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+ROOT = Path(__file__).resolve().parents[1]
+CARDS_DIR = ROOT / "docs" / "cards"
+DASHBOARD_DIR = ROOT / "web" / "dashboard"
+CARDS_JSON = DASHBOARD_DIR / "cards.json"
+CARD_STATS_JSON = DASHBOARD_DIR / "card_stats.json"
+LLMS_TXT = ROOT / "llms.txt"
 
-DEFAULT_SOURCE_GLOB = os.path.join(ROOT, "docs", "cards", "**", "*.md")
-DASHBOARD_JSON = os.path.join(ROOT, "web", "dashboard", "cards.json")
-OUT_MOBILE_DIR = os.path.join(ROOT, "outputs", "cards_mobile")
-OUT_EXTRACT_DIR = os.path.join(ROOT, "outputs", "cards_extract")
-
-
-def read_text(path: str) -> str:
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
+SYSTEM_NAME = "Somatic Checklist Writing System"
+SYSTEM_VERSION = "1.0"
 
 
-def ensure_dir(path: str) -> None:
-    os.makedirs(path, exist_ok=True)
+def now_iso() -> str:
+    return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
 
-def parse_frontmatter(md: str) -> Tuple[Dict[str, Any], str]:
-    """
-    Very small YAML subset parser: key: value, lists: [a,b]
-    If you already use PyYAML elsewhere, you can swap in safely.
-    """
-    if not md.lstrip().startswith("---"):
-        return {}, md
-    m = re.match(r"(?s)^\s*---\s*\n(.*?)\n---\s*\n(.*)$", md)
+def read_text(p: Path) -> str:
+    return p.read_text(encoding="utf-8")
+
+
+def write_text(p: Path, s: str) -> None:
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(s, encoding="utf-8")
+
+
+def load_json(p: Path, default: Any) -> Any:
+    if not p.exists():
+        return default
+    return json.loads(read_text(p))
+
+
+def save_json(p: Path, obj: Any) -> None:
+    write_text(p, json.dumps(obj, ensure_ascii=False, indent=2))
+
+
+def parse_frontmatter(md: str) -> Dict[str, Any]:
+    # very small YAML-like frontmatter parser for "key: value" and lists: [a,b]
+    fm = {}
+    m = re.match(r"^\s*---\s*\n([\s\S]*?)\n---\s*\n", md)
     if not m:
-        return {}, md
-    fm_raw, body = m.group(1), m.group(2)
-    fm: Dict[str, Any] = {}
-    for line in fm_raw.splitlines():
+        return fm
+    body = m.group(1)
+    for line in body.splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
@@ -42,173 +58,180 @@ def parse_frontmatter(md: str) -> Tuple[Dict[str, Any], str]:
         k, v = line.split(":", 1)
         k = k.strip()
         v = v.strip().strip('"').strip("'")
-        # list like [a, b]
+        # list support: [a, b]
         if v.startswith("[") and v.endswith("]"):
             inner = v[1:-1].strip()
-            items = [x.strip().strip('"').strip("'") for x in inner.split(",") if x.strip()]
-            fm[k] = items
-        elif v.lower() in ("true", "false"):
-            fm[k] = (v.lower() == "true")
+            if not inner:
+                fm[k] = []
+            else:
+                fm[k] = [x.strip().strip('"').strip("'") for x in inner.split(",")]
         else:
-            fm[k] = v
-    return fm, body
+            # bool support
+            if v.lower() in ("true", "false"):
+                fm[k] = v.lower() == "true"
+            else:
+                fm[k] = v
+    return fm
 
 
-def first_h1(body: str) -> str:
-    m = re.search(r"(?m)^\s*#\s+(.+?)\s*$", body)
-    return m.group(1).strip() if m else ""
-
-
-def extract_section(md: str, header: str) -> str:
-    pat = rf"(?ms)^\s*##\s+{re.escape(header)}\s*\n(.*?)(?=^\s*##\s+|\Z)"
-    m = re.search(pat, md)
-    return m.group(1).strip() if m else ""
-
-
-def extract_preview_lines(body: str) -> Dict[str, str]:
-    head = "\n".join(body.splitlines()[:40])
-    out = {}
-    # allow both "Preview:" and "preview_line:"
-    m = re.search(r"(?mi)^\s*(Preview|preview_line)\s*:\s*(.+)$", head)
+def extract_preview_line(md: str) -> str:
+    # 규칙: "미리보기 1줄"은 상태→효과만. 문서 내 "**Preview**:" 라인 우선.
+    m = re.search(r"^\s*\*\*Preview\*\*:\s*(.+)$", md, re.M)
     if m:
-        out["preview_line"] = m.group(2).strip()
-    m = re.search(r"(?m)^\s*Pass Condition:\s*(.+)$", head)
-    if m:
-        out["pass_condition"] = m.group(1).strip()
-    m = re.search(r"(?m)^\s*Unlock Rule:\s*(.+)$", head)
-    if m:
-        out["unlock_rule"] = m.group(1).strip()
-    return out
+        return m.group(1).strip()
+    # fallback: 첫 번째 헤더 아래 첫 문장
+    lines = [ln.strip() for ln in md.splitlines() if ln.strip()]
+    for ln in lines:
+        if ln.startswith("#"):
+            continue
+        return ln[:120]
+    return ""
 
 
-def build_mobile_card(card: Dict[str, Any]) -> str:
-    locked = bool(card.get("locked", False))
-    lines = []
-    lines.append(f"# {card.get('title','')}")
-    lines.append("")
-    lines.append(card.get("preview_line","").strip())
-    lines.append("")
-    lines.append(f"Pass Condition: {card.get('pass_condition','')}".strip())
-    if locked:
-        lines.append(f"Unlock Rule: {card.get('unlock_rule','')}".strip())
-    lines.append("")
-    lines.append("## Checklist A")
-    lines.append(card.get("checklist_a","").strip())
-    lines.append("")
-    lines.append("## Action (60s)")
-    lines.append(card.get("action_60s","").strip())
-    lines.append("")
-    lines.append("## Checklist B")
-    lines.append(card.get("checklist_b","").strip())
-    lines.append("")
-    lines.append("STOP: 통증/불안정/호흡 이상이면 즉시 중단.")
-    return "\n".join(lines).strip() + "\n"
+def extract_required_fields(md: str) -> Dict[str, Any]:
+    fm = parse_frontmatter(md)
+    # 기대 frontmatter:
+    # card_id, cluster_id, title, tags, locked(true/false)
+    card_id = fm.get("card_id", "")
+    cluster_id = fm.get("cluster_id", "")
+    title = fm.get("title", "")
+    tags = fm.get("tags", []) if isinstance(fm.get("tags", []), list) else []
+    locked = bool(fm.get("locked", False))
+
+    # Pass/Unlock는 body에서 key line으로 고정
+    pass_m = re.search(r"^\s*\*\*Pass Condition\*\*:\s+(.+)$", md, re.M)
+    unlock_m = re.search(r"^\s*\*\*Unlock Rule\*\*:\s+(.+)$", md, re.M)
+
+    return {
+        "card_id": card_id,
+        "cluster_id": cluster_id,
+        "title": title,
+        "tags": tags,
+        "locked": locked,
+        "pass_condition": (pass_m.group(1).strip() if pass_m else ""),
+        "unlock_rule": (unlock_m.group(1).strip() if unlock_m else ""),
+        "preview_line": extract_preview_line(md),
+    }
 
 
-def infer_url(card: Dict[str, Any]) -> str:
-    # 규칙: /cards/<cluster_id>/<card_id>/
-    cluster_id = card.get("cluster_id", "misc")
-    card_id = card.get("card_id", "unknown")
+def slug_url(cluster_id: str, card_id: str) -> str:
+    # MkDocs 경로가 /cards/<cluster>/<card>/ 로 나간다는 전제.
     return f"/cards/{cluster_id}/{card_id}/"
 
 
-def file_hash(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
-
-
-def main(source_glob: str = DEFAULT_SOURCE_GLOB) -> None:
-    ensure_dir(os.path.dirname(DASHBOARD_JSON))
-    ensure_dir(OUT_MOBILE_DIR)
-    ensure_dir(OUT_EXTRACT_DIR)
-
-    paths = glob.glob(source_glob, recursive=True)
-    cards: List[Dict[str, Any]] = []
+def build_clusters(card_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     clusters: Dict[str, Dict[str, Any]] = {}
-
-    for p in sorted(paths):
-        md = read_text(p)
-        fm, body = parse_frontmatter(md)
-        title = first_h1(body)
-        prev = extract_preview_lines(body)
-
-        card_id = fm.get("card_id") or os.path.splitext(os.path.basename(p))[0]
-        cluster_id = fm.get("cluster_id") or "misc"
-        locked = bool(fm.get("locked", False))
-
-        card = {
-            "card_id": card_id,
-            "cluster_id": cluster_id,
-            "title": title,
-            "preview_line": prev.get("preview_line", ""),
-            "locked": locked,
-            "pass_condition": prev.get("pass_condition", ""),
-            "unlock_rule": prev.get("unlock_rule", "") if locked else "",
-            "tags": fm.get("tags", []),
-            "updated": fm.get("updated", ""),
-            "source_path": os.path.relpath(p, ROOT).replace("\\", "/"),
-            "url": infer_url({"cluster_id": cluster_id, "card_id": card_id}),
-            # extractable blocks (for PDF rendering / validators / indexing)
-            "checklist_a": extract_section(body, "Checklist A"),
-            "action_60s": extract_section(body, "Action (60s)"),
-            "checklist_b": extract_section(body, "Checklist B"),
-            "definitions": extract_section(body, "Definitions"),
-            "procedure": extract_section(body, "Procedure"),
-            "faq": extract_section(body, "FAQ"),
-            "system_claim": extract_section(body, "System Claim"),
-            "content_hash": file_hash(body),
-        }
-
-        cards.append(card)
-
-        if cluster_id not in clusters:
-            clusters[cluster_id] = {
-                "cluster_id": cluster_id,
-                "title": cluster_id.replace("_", " ").title(),
+    for row in card_rows:
+        cid = row["cluster_id"]
+        if cid not in clusters:
+            clusters[cid] = {
+                "cluster_id": cid,
+                "title": cid.replace("_", " ").title(),
                 "description": "",
-                "cards": [],
+                "cards": []
             }
-        clusters[cluster_id]["cards"].append({
-            "card_id": card_id,
-            "title": title,
-            "preview_line": card["preview_line"],
-            "url": card["url"],
-            "locked": locked,
-            "pass_condition": card["pass_condition"],
-            "unlock_rule": card["unlock_rule"],
-            "tags": card["tags"],
+        clusters[cid]["cards"].append({
+            "card_id": row["card_id"],
+            "title": row["title"] or row["card_id"],
+            "preview_line": row["preview_line"],
+            "locked": bool(row["locked"]),
+            "pass_condition": row["pass_condition"],
+            "unlock_rule": row["unlock_rule"],
+            "tags": row["tags"],
+            "url": slug_url(cid, row["card_id"]),
         })
+    # stable sort
+    out = []
+    for k in sorted(clusters.keys()):
+        clusters[k]["cards"] = sorted(clusters[k]["cards"], key=lambda x: x["card_id"])
+        out.append(clusters[k])
+    return out
 
-        # write mobile + extract json
-        mobile_md = build_mobile_card(card)
-        with open(os.path.join(OUT_MOBILE_DIR, f"{card_id}.md"), "w", encoding="utf-8") as f:
-            f.write(mobile_md)
-        with open(os.path.join(OUT_EXTRACT_DIR, f"{card_id}.json"), "w", encoding="utf-8") as f:
-            json.dump(card, f, ensure_ascii=False, indent=2)
 
-    dashboard = {
-        "system": {
-            "name": "Somatic Checklist Writing System",
-            "version": "1.0",
-            "updated": datetime.now().strftime("%Y-%m-%d"),
-            "unit": "routine_card",
-        },
-        "clusters": list(clusters.values()),
-        "routines": {"weekly": [], "monthly": []},
+def ensure_stats_schema() -> Dict[str, Any]:
+    default = {
+        "schema_version": "1.0",
+        "updated": now_iso(),
+        "by_card_id": {}
+    }
+    stats = load_json(CARD_STATS_JSON, default)
+    # normalize
+    if "by_card_id" not in stats:
+        stats["by_card_id"] = {}
+    return stats
+
+
+def merge_stats_into_cards(cards_obj: Dict[str, Any], stats_obj: Dict[str, Any]) -> None:
+    # cards.json.stats.by_card_id must exist
+    by = stats_obj.get("by_card_id", {})
+    cards_obj["stats"] = {"by_card_id": by}
+
+
+def write_llms_txt(cards_obj: Dict[str, Any]) -> None:
+    lines: List[str] = []
+    lines.append(f"SYSTEM_NAME: {SYSTEM_NAME}")
+    lines.append(f"SYSTEM_VERSION: {SYSTEM_VERSION}")
+    lines.append("ENTRYPOINTS:")
+    lines.append("- /docs/ssot/")
+    lines.append("- /docs/learning/")
+    lines.append("- /dashboard/cards.json")
+    lines.append("")
+    lines.append("CLUSTERS:")
+    for cl in cards_obj.get("clusters", []):
+        lines.append(f"- {cl['cluster_id']}: /cards/{cl['cluster_id']}/")
+        for c in cl.get("cards", []):
+            lines.append(f"  - {c['card_id']}: {c['url']}")
+    lines.append("")
+    lines.append("STRUCTURE_RULES:")
+    lines.append("- Every card includes Definitions (table), Procedure (steps), FAQ (>=3), System Claim.")
+    lines.append("- Every card declares Pass Condition; locked cards declare Unlock Rule.")
+    lines.append("")
+    lines.append("MACHINE_READABLE:")
+    lines.append("- cards.json is authoritative index for all routine cards (card_id keyed).")
+    write_text(LLMS_TXT, "\n".join(lines) + "\n")
+
+
+def main() -> int:
+    DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
+
+    card_files = []
+    if CARDS_DIR.exists():
+        card_files = sorted([p for p in CARDS_DIR.rglob("*.md") if p.is_file()])
+    rows: List[Dict[str, Any]] = []
+    for p in card_files:
+        md = read_text(p)
+        fields = extract_required_fields(md)
+        if not fields["card_id"] or not fields["cluster_id"]:
+            # skip invalid card
+            continue
+        rows.append(fields)
+
+    clusters = build_clusters(rows)
+
+    cards_obj = {
+        "system": {"name": SYSTEM_NAME, "version": SYSTEM_VERSION, "updated": now_iso()},
+        "clusters": clusters,
+        "stats": {"by_card_id": {}}
     }
 
-    with open(DASHBOARD_JSON, "w", encoding="utf-8") as f:
-        json.dump(dashboard, f, ensure_ascii=False, indent=2)
+    stats_obj = ensure_stats_schema()
+    # stub 집계: 카드가 새로 생기면 stats 기본값 부여 (실집계는 나중에)
+    by = stats_obj.get("by_card_id", {})
+    for row in rows:
+        if row["card_id"] not in by:
+            by[row["card_id"]] = {"attempts": 0, "passes": 0, "fails": 0, "last_7d": 0}
+    stats_obj["updated"] = now_iso()
+    save_json(CARD_STATS_JSON, stats_obj)
 
-    print(f"Exported cards: {len(cards)}")
-    print(f"Wrote: {os.path.relpath(DASHBOARD_JSON, ROOT)}")
-    print(f"Wrote mobile: outputs/cards_mobile/*.md")
-    print(f"Wrote extracts: outputs/cards_extract/*.json")
+    merge_stats_into_cards(cards_obj, stats_obj)
+    save_json(CARDS_JSON, cards_obj)
+    write_llms_txt(cards_obj)
+
+    print(f"Wrote: {CARDS_JSON}")
+    print(f"Wrote: {CARD_STATS_JSON}")
+    print(f"Wrote: {LLMS_TXT}")
+    return 0
 
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1:
-        # allow overriding source glob
-        main(sys.argv[1])
-    else:
-        main()
+    raise SystemExit(main())
