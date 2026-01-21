@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "updated": "2026-01-21T16:30:40Z",
+  "by_card_id": {
+    "tango_ankle_alignment_v1": {
+      "attempts": 0,
+      "passes": 0,
+      "fails": 0,
+      "last_7d": 0
+    }
+  }
+}

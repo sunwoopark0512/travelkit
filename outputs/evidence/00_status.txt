@@ -1,0 +1,16 @@
+﻿## main...origin/main
+ M .gitignore
+ D data/ingest/raw/example.com.html
+ D data/ingest/raw/https___example_com.html
+ M data/ingest/text/.txt
+ M data/ingest/urls.txt
+ M data/learn/kb.jsonl
+ M data/learn/problems.jsonl
+?? AGENTS.md
+?? "Google Sheets API.txt"
+?? apps-script-samples/
+?? data/ingest/raw/en.wikipedia.org_wiki_Energy.html
+?? package-lock.json
+?? temp_gsheetlogger/
+?? temp_repo/
+?? tools/sheet_bot.py

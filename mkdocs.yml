@@ -1,0 +1,18 @@
+site_name: VibeCoding Docs
+repo_name: vibe-coding
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - content.code.copy
+nav:
+  - Home: index.md
+  - SSoT: ssot.md
+  - Iterations: iterations/index.md
+  - Release: release.md
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true

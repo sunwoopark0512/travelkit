@@ -1,0 +1,605 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>AI Pipeline (v1) — Windows-first - VibeCoding Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ai-pipeline-v1-windows-first" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="VibeCoding Docs" class="md-header__button md-logo" aria-label="VibeCoding Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            VibeCoding Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AI Pipeline (v1) — Windows-first
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="VibeCoding Docs" class="md-nav__button md-logo" aria-label="VibeCoding Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    VibeCoding Docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ssot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSoT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../iterations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Iterations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        목적
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        전제
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        준비
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="준비">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Python 패키지
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) 환경변수
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        탭(시트) 구조
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        실행 (Evidence 생성)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="실행 (Evidence 생성)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#evidence-201" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence 201: 평가 실행
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evidence-202" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence 202: 평가 + 큐 반영
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evidence-203-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence 203: 30분 대본 생성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evidence-204-idempotency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence 204: 재실행(idempotency) 증명
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        실패 대응
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        원복
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="ai-pipeline-v1-windows-first">AI Pipeline (v1) — Windows-first<a class="headerlink" href="#ai-pipeline-v1-windows-first" title="Permanent link">&para;</a></h1>
+<h2 id="_1">목적<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>INBOX(아이디어 입력) → EVAL_LOG(AI 평가) → CONTENT_QUEUE(제작 큐) → SCRIPTS(대본 생성)까지 “재실행 가능 + 증거 기반” 파이프라인을 제공한다.</p>
+<h2 id="_2">전제<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Sheet Bot v3 기준선: INBOX 컬럼은 [Date, Title, Body, IdemKey]</li>
+<li>credentials.json은 로컬에만 존재(깃 커밋 금지)</li>
+<li>API 키는 환경변수로만 주입(코드/문서에 직접 기입 금지)</li>
+</ul>
+<h2 id="_3">준비<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="1-python">1) Python 패키지<a class="headerlink" href="#1-python" title="Permanent link">&para;</a></h3>
+<p>PowerShell:
+- pip install gspread oauth2client requests</p>
+<h3 id="2">2) 환경변수<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
+<p>PowerShell:
+- $env:OPENAI_API_KEY="YOUR_KEY"
+- $env:SHEET_KEY="YOUR_SHEET_KEY"</p>
+<h2 id="_4">탭(시트) 구조<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<ul>
+<li>INBOX: Date, Title, Body, IdemKey (기존)</li>
+<li>EVAL_LOG: Date, IdemKey, Title, ScoreTotal, Category, FormatReco, NextAction, EvalJson, Model, PromptVer</li>
+<li>CONTENT_QUEUE: Date, IdemKey, Title, Body, Priority, Channel, Status, Notes</li>
+<li>SCRIPTS: Date, IdemKey, Title, ScriptType, ScriptText, Model, PromptVer</li>
+</ul>
+<h2 id="evidence">실행 (Evidence 생성)<a class="headerlink" href="#evidence" title="Permanent link">&para;</a></h2>
+<h3 id="evidence-201">Evidence 201: 평가 실행<a class="headerlink" href="#evidence-201" title="Permanent link">&para;</a></h3>
+<pre><code class="language-powershell">python tools/ai_eval.py --sheet-key $env:SHEET_KEY --tab INBOX --out-tab EVAL_LOG --limit 20 --model gpt-4o-mini --prompt-ver v1 --verify 2&gt;&amp;1 | Tee-Object outputs\evidence\201_eval_json_tail200.txt
+</code></pre>
+<h3 id="evidence-202">Evidence 202: 평가 + 큐 반영<a class="headerlink" href="#evidence-202" title="Permanent link">&para;</a></h3>
+<pre><code class="language-powershell">python tools/ai_eval.py --sheet-key $env:SHEET_KEY --tab INBOX --out-tab EVAL_LOG --write-queue --queue-tab CONTENT_QUEUE --limit 20 --model gpt-4o-mini --prompt-ver v1 --verify 2&gt;&amp;1 | Tee-Object outputs\evidence\202_queue_write_tail200.txt
+</code></pre>
+<h3 id="evidence-203-30">Evidence 203: 30분 대본 생성<a class="headerlink" href="#evidence-203-30" title="Permanent link">&para;</a></h3>
+<pre><code class="language-powershell">python tools/script_gen.py --sheet-key $env:SHEET_KEY --queue-tab CONTENT_QUEUE --out-tab SCRIPTS --status READY --limit 5 --script-type 30m --model gpt-4o-mini --prompt-ver v1 --verify 2&gt;&amp;1 | Tee-Object outputs\evidence\203_script_30m_tail200.txt
+</code></pre>
+<h3 id="evidence-204-idempotency">Evidence 204: 재실행(idempotency) 증명<a class="headerlink" href="#evidence-204-idempotency" title="Permanent link">&para;</a></h3>
+<p>동일 커맨드를 다시 실행했을 때 SKIP 로그가 나와야 한다.</p>
+<pre><code class="language-powershell">python tools/ai_eval.py --sheet-key $env:SHEET_KEY --tab INBOX --out-tab EVAL_LOG --limit 20 --model gpt-4o-mini --prompt-ver v1 --verify 2&gt;&amp;1 | Tee-Object outputs\evidence\204_idempotency_rerun_tail200.txt
+python tools/script_gen.py --sheet-key $env:SHEET_KEY --queue-tab CONTENT_QUEUE --out-tab SCRIPTS --status READY --limit 5 --script-type 30m --model gpt-4o-mini --prompt-ver v1 --verify 2&gt;&amp;1 | Tee-Object -Append outputs\evidence\204_idempotency_rerun_tail200.txt
+</code></pre>
+<h2 id="_5">실패 대응<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<ul>
+<li>OpenAI JSON 파싱 실패: 프롬프트 규칙 위반 가능 → 재실행(백오프 포함), 반복 시 prompt-ver 올려 수정</li>
+<li>Sheets 권한 실패: credentials.json 서비스 계정 이메일이 시트 편집자로 공유되어야 함</li>
+<li>중복 생성 방지: EVAL_LOG는 (IdemKey, PromptVer), SCRIPTS는 (IdemKey, ScriptType, PromptVer) 기준으로 SKIP</li>
+</ul>
+<h2 id="_6">원복<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<ul>
+<li>변경 전 기준선 복구: git reset --hard sheet-bot-v3</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

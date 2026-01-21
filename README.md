@@ -1,5 +1,20 @@
 # TravelKit - 여행 필수품 체크리스트 앱
 
+<!-- SSOT-SUMMARY-START -->
+> **SSoT Status**: VibeCoding Console (Updated: 2026-01-20)
+>
+> **Success Metrics**:
+> - Iteration 로그가 100% 남는다
+> - needs-action 항목이 콘솔에서 즉시 식별된다
+> - SSoT 변경 시 README 요약이 자동 갱신된다
+> - main 푸시마다 Docs가 GitHub Pages에 배포된다
+>
+> **Core Features**:
+> - Obsidian DataviewJS 운영 콘솔
+> - SSoT 단일 기준 문서
+> - MkDocs 자동 배포
+<!-- SSOT-SUMMARY-END -->
+
 ## 프로젝트 개요
 
 **TravelKit**은 개인 및 소규모 팀을 위한 스마트 여행 물품 관리 및 체크 도구입니다.

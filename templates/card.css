@@ -1,0 +1,45 @@
+body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    margin: 28px;
+}
+
+h1 {
+    margin: 0 0 8px 0;
+}
+
+.meta {
+    color: #555;
+    font-size: 12px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.preview {
+    margin-top: 12px;
+    font-size: 16px;
+}
+
+section {
+    margin-top: 18px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+td,
+th {
+    border: 1px solid #ddd;
+    padding: 8px;
+    font-size: 13px;
+}
+
+footer {
+    margin-top: 18px;
+    color: #777;
+    font-size: 12px;
+}

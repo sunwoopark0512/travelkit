@@ -1,0 +1,397 @@
+{
+    "schema_version": "1.0.0",
+    "workflow_id": "opencode-strict-evidence-10-headers",
+    "name": "OpenCode Strict Evidence 10 Headers Workflow",
+    "description": "TravelKit/OpenCode 거버넌스 자동 실행 워크플로 - PR 번호 하나로 10 헤더 증거 생성/검증/업로드",
+    "inputs": {
+        "pr_number": {
+            "type": "integer",
+            "required": true,
+            "description": "검증할 PR 번호"
+        },
+        "repo": {
+            "type": "string",
+            "default": "sunwoopark0512/travelkit",
+            "description": "GitHub 저장소 (owner/repo)"
+        },
+        "base_branch": {
+            "type": "string",
+            "default": "main",
+            "description": "베이스 브랜치"
+        }
+    },
+    "agents": {
+        "browser": {
+            "type": "browser",
+            "name": "Browser Agent",
+            "description": "GitHub API/CLI로 PR 정보 수집",
+            "tools": [
+                "github_cli",
+                "git"
+            ]
+        },
+        "developer": {
+            "type": "developer",
+            "name": "Developer Agent",
+            "description": "로컬 스크립트 실행 및 CLI 명령",
+            "tools": [
+                "github_cli",
+                "git",
+                "powershell_core",
+                "file_io"
+            ]
+        },
+        "document": {
+            "type": "document",
+            "name": "Document Agent",
+            "description": "증거 문서 로드 및 검증",
+            "tools": [
+                "file_io"
+            ]
+        },
+        "supervisor": {
+            "type": "supervisor",
+            "name": "Supervisor (HITL)",
+            "description": "사람 승인 요청 처리 (PASS_NA, 환경 부족 등)",
+            "hitl_enabled": true
+        }
+    },
+    "tools": {
+        "github_cli": {
+            "type": "mcp",
+            "name": "GitHub CLI",
+            "executable": "gh",
+            "description": "gh 명령 실행 (pr view, pr checks, pr comment 등)",
+            "auth": {
+                "env_var": "GITHUB_TOKEN"
+            }
+        },
+        "git": {
+            "type": "mcp",
+            "name": "Git",
+            "executable": "git",
+            "description": "git 명령 실행"
+        },
+        "powershell_core": {
+            "type": "mcp",
+            "name": "PowerShell Core",
+            "executable": "pwsh",
+            "fallback_executable": "powershell",
+            "graceful_fail": true,
+            "description": "pwsh 실행 (없으면 graceful fail)",
+            "on_missing": {
+                "action": "hitl_escalate",
+                "message": "pwsh (PowerShell Core) 미설치. Supervisor 승인 필요."
+            }
+        },
+        "file_io": {
+            "type": "mcp",
+            "name": "File IO",
+            "description": "outputs 파일 읽기/쓰기",
+            "allowed_paths": [
+                "outputs/"
+            ]
+        }
+    },
+    "steps": [
+        {
+            "id": "S1",
+            "name": "PR 파일 목록 수집",
+            "agent": "browser",
+            "tool": "github_cli",
+            "command": "gh pr view {{pr_number}} --repo {{repo}} --json files --jq '.files[].path'",
+            "output_var": "pr_files",
+            "on_error": {
+                "action": "fail",
+                "message": "PR 파일 목록 수집 실패"
+            }
+        },
+        {
+            "id": "S2",
+            "name": "PR checks 수집",
+            "agent": "browser",
+            "tool": "github_cli",
+            "command": "gh pr checks {{pr_number}} --repo {{repo}}",
+            "output_var": "pr_checks",
+            "allow_empty": true,
+            "on_empty": {
+                "set_flag": "no_checks_reported",
+                "value": true
+            }
+        },
+        {
+            "id": "S3",
+            "name": "Evidence 생성 (PowerShell)",
+            "agent": "developer",
+            "tool": "powershell_core",
+            "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/generate_evidence_strict.ps1 -PrNumber {{pr_number}} -OutputFile outputs/evidence_bundle_pr{{pr_number}}.txt -OracleExcerpt outputs/oracle_excerpt_pr{{pr_number}}.md",
+            "fallback_command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/generate_evidence_strict.ps1 -PrNumber {{pr_number}} -OutputFile outputs/evidence_bundle_pr{{pr_number}}.txt -OracleExcerpt outputs/oracle_excerpt_pr{{pr_number}}.md",
+            "timeout_seconds": 180,
+            "output_var": "evidence_generation_log",
+            "on_error": {
+                "action": "hitl_escalate",
+                "message": "Evidence 생성 실패. 환경 확인 필요."
+            }
+        },
+        {
+            "id": "S4",
+            "name": "Oracle Excerpt 로드",
+            "agent": "document",
+            "tool": "file_io",
+            "action": "read",
+            "path": "outputs/oracle_excerpt_pr{{pr_number}}.md",
+            "encoding": "utf-8",
+            "output_var": "oracle_excerpt_content",
+            "on_error": {
+                "action": "fail",
+                "message": "oracle_excerpt_pr{{pr_number}}.md 파일을 찾을 수 없음"
+            }
+        },
+        {
+            "id": "S5",
+            "name": "Strict Evidence 10 헤더 검증",
+            "agent": "document",
+            "type": "gate",
+            "validation": {
+                "type": "header_check",
+                "input": "{{oracle_excerpt_content}}",
+                "required_headers": [
+                    "[EVIDENCE] CHECKS_SNAPSHOT (STRICT)",
+                    "[EVIDENCE] LATEST_RUN_META",
+                    "[EVIDENCE] DIFF_AFTER (Scope)",
+                    "[EVIDENCE] ROLE_CONTRACT_LEDGER_RULE_EXCERPT",
+                    "[EVIDENCE] PROJECT_OVERVIEW_MD",
+                    "[EVIDENCE] PROJECT_LEDGER_MD",
+                    "[EVIDENCE] AIRTABLE_SYNC_LOG",
+                    "[EVIDENCE] STICKY_VERIFY",
+                    "[EVIDENCE] COMMAND_LOG",
+                    "[EVIDENCE] FINAL_VERDICT"
+                ],
+                "rules": {
+                    "exact_count": 10,
+                    "each_once": true,
+                    "no_interleave": true
+                }
+            },
+            "output_var": "header_validation",
+            "on_fail": {
+                "action": "record_failure",
+                "details": {
+                    "missing_headers": "{{header_validation.missing}}",
+                    "duplicate_headers": "{{header_validation.duplicates}}",
+                    "corrupted_headers": "{{header_validation.corrupted}}"
+                }
+            }
+        },
+        {
+            "id": "S6",
+            "name": "FINAL_VERDICT 검증",
+            "agent": "document",
+            "type": "gate",
+            "validation": {
+                "type": "exact_match",
+                "input": "{{oracle_excerpt_content}}",
+                "pattern": "Verdict: ✅ PASS",
+                "context": "[EVIDENCE] FINAL_VERDICT"
+            },
+            "output_var": "verdict_validation",
+            "hitl_conditions": [
+                {
+                    "condition": "{{no_checks_reported}} == true",
+                    "action": "hitl_request",
+                    "prompt": "gh pr checks가 'no checks reported'입니다. PASS_NA 승인하시겠습니까?",
+                    "options": [
+                        "PASS_NA 승인 (사유 입력)",
+                        "FAIL 처리"
+                    ],
+                    "require_reason": true
+                },
+                {
+                    "condition": "{{oracle_excerpt_content}} contains 'DRY_RUN'",
+                    "action": "auto_pass",
+                    "notes": "Airtable DRY_RUN은 PASS로 처리 (AIRTABLE_SYNC_LOG 섹션 존재 필수)"
+                }
+            ]
+        },
+        {
+            "id": "S7",
+            "name": "PR 코멘트 업로드",
+            "agent": "developer",
+            "tool": "github_cli",
+            "command": "gh pr comment {{pr_number}} --repo {{repo}} --body-file outputs/oracle_excerpt_pr{{pr_number}}.md",
+            "output_var": "comment_url",
+            "on_error": {
+                "action": "fail",
+                "message": "PR 코멘트 업로드 실패"
+            }
+        },
+        {
+            "id": "S8",
+            "name": "업로드된 코멘트 재조회 (오염 탐지)",
+            "agent": "browser",
+            "tool": "github_cli",
+            "command": "gh pr view {{pr_number}} --repo {{repo}} --json comments --jq '.comments[-1].body'",
+            "output_var": "uploaded_comment",
+            "validation": {
+                "type": "compare",
+                "compare_with": "{{oracle_excerpt_content}}",
+                "detect": "corruption"
+            },
+            "output_var": "upload_validation",
+            "on_mismatch": {
+                "action": "warn",
+                "message": "서버 업로드 오염 탐지: 업로드된 코멘트가 원본과 다름"
+            }
+        }
+    ],
+    "outputs": {
+        "evidence_bundle": {
+            "path": "outputs/evidence_bundle_pr{{pr_number}}.txt",
+            "description": "전체 증거 번들",
+            "encoding": "utf-8"
+        },
+        "oracle_excerpt": {
+            "path": "outputs/oracle_excerpt_pr{{pr_number}}.md",
+            "description": "Oracle Excerpt (PR 코멘트용)",
+            "encoding": "utf-8"
+        },
+        "validation_result": {
+            "path": "outputs/strict_evidence_validate_pr{{pr_number}}.json",
+            "description": "검증 결과 JSON",
+            "encoding": "utf-8",
+            "schema": {
+                "status": "pass | fail",
+                "pr_number": "integer",
+                "timestamp": "ISO8601",
+                "header_validation": {
+                    "total_required": 10,
+                    "found": "integer",
+                    "missing": [
+                        "string"
+                    ],
+                    "duplicates": [
+                        "string"
+                    ],
+                    "corrupted": [
+                        "string"
+                    ]
+                },
+                "verdict_check": {
+                    "expected": "Verdict: ✅ PASS",
+                    "found": "string",
+                    "match": "boolean"
+                },
+                "hitl_decisions": [
+                    {
+                        "step": "string",
+                        "action": "string",
+                        "reason": "string",
+                        "approver": "string"
+                    }
+                ],
+                "failures": [
+                    {
+                        "step": "string",
+                        "type": "string",
+                        "message": "string"
+                    }
+                ],
+                "environment": {
+                    "pwsh_available": "boolean",
+                    "github_cli_available": "boolean"
+                }
+            }
+        }
+    },
+    "hitl_config": {
+        "enabled": true,
+        "timeout_minutes": 60,
+        "escalation_policy": {
+            "no_checks_reported": {
+                "prompt": "CI checks가 설정되지 않았습니다. PASS_NA 승인하시겠습니까?",
+                "options": [
+                    "approve_pass_na",
+                    "reject_fail"
+                ],
+                "require_reason": true,
+                "min_reason_length": 20
+            },
+            "pwsh_missing": {
+                "prompt": "PowerShell Core (pwsh)가 설치되지 않았습니다. Windows PowerShell로 대체 실행하시겠습니까?",
+                "options": [
+                    "use_powershell_fallback",
+                    "manual_execution_guide",
+                    "abort"
+                ],
+                "fallback_command": "powershell -NoProfile -ExecutionPolicy Bypass ..."
+            },
+            "header_incomplete": {
+                "prompt": "필수 헤더가 누락되었습니다: {{missing_headers}}. PASS_NA 처리하시겠습니까?",
+                "options": [
+                    "approve_pass_na",
+                    "retry_generation",
+                    "abort"
+                ],
+                "require_reason": true
+            }
+        },
+        "notifications": {
+            "on_request": {
+                "channels": [
+                    "in_app"
+                ],
+                "sound": true
+            },
+            "on_timeout": {
+                "action": "auto_fail",
+                "message": "HITL 승인 타임아웃"
+            }
+        }
+    },
+    "error_handling": {
+        "record_failures": true,
+        "failure_output_path": "outputs/strict_evidence_validate_pr{{pr_number}}.json",
+        "failure_types": {
+            "header_missing": {
+                "severity": "error",
+                "record_fields": [
+                    "header_name",
+                    "expected",
+                    "found"
+                ]
+            },
+            "header_duplicate": {
+                "severity": "error",
+                "record_fields": [
+                    "header_name",
+                    "count"
+                ]
+            },
+            "header_corrupted": {
+                "severity": "error",
+                "record_fields": [
+                    "header_name",
+                    "corruption_type",
+                    "details"
+                ]
+            },
+            "command_failed": {
+                "severity": "error",
+                "record_fields": [
+                    "step",
+                    "command",
+                    "exit_code",
+                    "stderr"
+                ]
+            },
+            "environment_missing": {
+                "severity": "warning",
+                "record_fields": [
+                    "tool",
+                    "fallback_used"
+                ]
+            }
+        }
+    },
+    "notes": "이 워크플로는 Eigent 스키마와 Vendor-neutral 구조를 혼합하여 설계됨. 실제 Eigent 버전에 따라 필드 매핑이 필요할 수 있음. powershell_core 툴의 graceful_fail과 fallback_command 지원은 Eigent 구현에 따라 커스터마이징 필요."
+}

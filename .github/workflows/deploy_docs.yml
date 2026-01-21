@@ -1,0 +1,83 @@
+name: Deploy Docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'ssot/**'
+      - 'web/**'
+      - 'VibeCoding/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs-material regex pyyaml
+
+      - name: Sync SSoT to Docs
+        run: |
+          # Copy source SSoT to docs folder for MkDocs
+          cp ssot/SSoT.md docs/ssot.md
+          
+          # Run sync script to verify/update README (optional check)
+          python scripts/sync_ssot.py
+          
+          # Check if README changed (informational, or we could commit)
+          git diff README.md
+
+      - name: Generate Gold QA
+        run: |
+          python scripts/generate_gold_qa.py
+          # Optional: verifying outputs exist
+          ls -l outputs/
+
+      - name: Export Iterations to Docs
+        run: |
+          python scripts/export_iterations.py
+
+      - name: Build Unified Site
+        run: |
+          # Create Publish Directory
+          mkdir -p publish/docs/
+          
+          # Copy Landing Page (web/landing/* -> publish/*)
+          if [ -d "web/landing" ]; then
+            cp -r web/landing/* publish/
+          else
+            echo "Warning: web/landing not found, skipping landing page."
+          fi
+
+          # Copy Dashboard (web/dashboard/* -> publish/dashboard/*)
+          if [ -d "web/dashboard" ]; then
+            mkdir -p publish/dashboard/
+            cp -r web/dashboard/* publish/dashboard/
+          else
+            echo "Warning: web/dashboard not found, skipping dashboard."
+          fi
+          
+          # Build MkDocs (docs -> site)
+          mkdocs build --clean
+          
+          # Move MkDocs site (site/* -> publish/docs/*)
+          cp -r site/* publish/docs/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./publish

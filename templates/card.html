@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="card.css">
+</head>
+
+<body>
+    <header>
+        <h1>{{title}}</h1>
+        <div class="meta">
+            <span>card_id: {{card_id}}</span>
+            <span>cluster_id: {{cluster_id}}</span>
+            <span>locked: {{locked}}</span>
+        </div>
+        <div class="preview">{{preview_line}}</div>
+    </header>
+
+    <section>
+        <h2>Pass / Unlock</h2>
+        <p><b>Pass Condition</b>: {{pass_condition}}</p>
+        <p><b>Unlock Rule</b>: {{unlock_rule}}</p>
+    </section>
+
+    <section>
+        <h2>Definitions</h2>
+        {{definitions_table_html}}
+    </section>
+
+    <section>
+        <h2>Procedure</h2>
+        {{procedure_html}}
+    </section>
+
+    <section>
+        <h2>FAQ</h2>
+        {{faq_html}}
+    </section>
+
+    <section>
+        <h2>System Claim</h2>
+        <p>This page is a Routine Card in the Somatic Checklist Writing System.</p>
+        <p>Each card is identified by card_id and evaluated by Pass/Fail gates.</p>
+        <p>Cards are organized as Card → Weekly Routine → Monthly Diagnosis.</p>
+        <p>The authoritative index is /dashboard/cards.json.</p>
+    </section>
+
+    <footer>
+        <small>Generated: {{generated_at}}</small>
+    </footer>
+</body>
+
+</html>

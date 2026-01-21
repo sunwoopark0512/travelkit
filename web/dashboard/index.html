@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Card Dashboard</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            margin: 24px;
+        }
+
+        .top {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .meta {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .cluster {
+            margin-top: 28px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .card h3 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+        }
+
+        .preview {
+            color: #222;
+            margin: 8px 0 10px 0;
+        }
+
+        .kv {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #444;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid #ccc;
+        }
+
+        .locked {
+            border-color: #000;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top">
+        <h1 style="margin:0;">Card Dashboard</h1>
+        <div class="meta" id="meta"></div>
+    </div>
+
+    <p class="small">
+        Source: <code>/web/dashboard/cards.json</code> (authoritative index, anonymous stats by <code>card_id</code>)
+    </p>
+
+    <div id="root"></div>
+
+    <script>
+        async function loadCards() {
+            // cards.json 위치: 같은 폴더에 두면 상대경로 ./cards.json 로 OK
+            const res = await fetch("./cards.json", { cache: "no-store" });
+            if (!res.ok) throw new Error("Failed to fetch cards.json: " + res.status);
+            return await res.json();
+        }
+
+        function el(tag, attrs = {}, children = []) {
+            const n = document.createElement(tag);
+            for (const [k, v] of Object.entries(attrs)) {
+                if (k === "class") n.className = v;
+                else if (k === "html") n.innerHTML = v;
+                else n.setAttribute(k, v);
+            }
+            for (const c of children) n.appendChild(c);
+            return n;
+        }
+
+        function render(data) {
+            const meta = document.getElementById("meta");
+            meta.textContent = `${data.system?.name || ""} · v${data.system?.version || ""} · updated ${data.system?.updated || ""}`;
+
+            const root = document.getElementById("root");
+            root.innerHTML = "";
+
+            const statsBy = (data.stats && data.stats.by_card_id) ? data.stats.by_card_id : {};
+
+            for (const cl of (data.clusters || [])) {
+                const section = el("section", { class: "cluster" }, [
+                    el("h2", {}, [document.createTextNode(cl.title || cl.cluster_id)]),
+                ]);
+
+                const grid = el("div", { class: "grid" });
+
+                for (const c of (cl.cards || [])) {
+                    const st = statsBy[c.card_id] || { attempts: 0, passes: 0, fails: 0, last_7d: 0 };
+                    const locked = !!c.locked;
+                    const card = el("div", { class: `card ${locked ? "locked" : ""}` });
+
+                    const title = el("h3", {}, [
+                        el("a", { href: c.url || "#", title: c.card_id }, [document.createTextNode(c.title || c.card_id)])
+                    ]);
+
+                    const preview = el("div", { class: "preview" }, [document.createTextNode(c.preview_line || "")]);
+
+                    const kv = el("div", { class: "kv" }, [
+                        el("span", { class: "badge" }, [document.createTextNode(`locked: ${locked}`)]),
+                        el("span", { class: "badge" }, [document.createTextNode(`attempts: ${st.attempts}`)]),
+                        el("span", { class: "badge" }, [document.createTextNode(`passes: ${st.passes}`)]),
+                        el("span", { class: "badge" }, [document.createTextNode(`fails: ${st.fails}`)]),
+                        el("span", { class: "badge" }, [document.createTextNode(`last_7d: ${st.last_7d}`)]),
+                    ]);
+
+                    const pass = el("div", { class: "small" }, [document.createTextNode(`Pass: ${c.pass_condition || "-"}`)]);
+                    const unlock = el("div", { class: "small" }, [document.createTextNode(`Unlock: ${c.unlock_rule || "-"}`)]);
+
+                    card.appendChild(title);
+                    card.appendChild(preview);
+                    card.appendChild(kv);
+                    card.appendChild(pass);
+                    card.appendChild(unlock);
+
+                    grid.appendChild(card);
+                }
+
+                section.appendChild(grid);
+                root.appendChild(section);
+            }
+        }
+
+        loadCards().then(render).catch(err => {
+            document.getElementById("root").textContent = err.message;
+            console.error(err);
+        });
+    </script>
+</body>
+
+</html>
