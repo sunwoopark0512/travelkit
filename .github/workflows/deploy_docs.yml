@@ -61,6 +61,14 @@ jobs:
           else
             echo "Warning: web/landing not found, skipping landing page."
           fi
+
+          # Copy Dashboard (web/dashboard/* -> publish/dashboard/*)
+          if [ -d "web/dashboard" ]; then
+            mkdir -p publish/dashboard/
+            cp -r web/dashboard/* publish/dashboard/
+          else
+            echo "Warning: web/dashboard not found, skipping dashboard."
+          fi
           
           # Build MkDocs (docs -> site)
           mkdocs build --clean

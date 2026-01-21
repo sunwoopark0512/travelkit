@@ -1,12 +1,12 @@
 {
-    "schema_version": "1.0",
-    "updated": "2026-01-20T00:00:00Z",
-    "by_card_id": {
-        "tango_ankle_alignment_v1": {
-            "attempts": 0,
-            "passes": 0,
-            "fails": 0,
-            "last_7d": 0
-        }
+  "schema_version": "1.0",
+  "updated": "2026-01-21T16:26:49Z",
+  "by_card_id": {
+    "tango_ankle_alignment_v1": {
+      "attempts": 0,
+      "passes": 0,
+      "fails": 0,
+      "last_7d": 0
     }
+  }
 }
