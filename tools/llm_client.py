@@ -1,5 +1,5 @@
-﻿import os, json, time, random
-from typing import Optional, Dict, Any
+import os, json, time, random
+from typing import Optional, Dict, Any, List
 import requests
 
 class LLMError(Exception):
@@ -14,46 +14,6 @@ def _require_env(name: str) -> str:
 def call_openai_json_only(prompt: str, model: str, timeout: int = 60) -> Dict[str, Any]:
     api_key = _require_env("OPENAI_API_KEY")
     
-    # MOCK INTERCEPT for Testing without Keys
-    if api_key == "dummy-api-key":
-        time.sleep(0.1) 
-        # Check prompt content to decide response type
-        if "score_total" in prompt:
-            # Evaluator Mock (Found "score_total" in prompt rules/schema)
-            return {
-                "score_total": 88,
-                "scores": {"novelty":18,"pain":18,"pay":18,"repeatability":18,"ease":16},
-                "category": "money",
-                "format_reco": "30m_narration",
-                "next_action": "QUEUE",
-                "hook": "Mock Hook",
-                "angle": "Mock Angle",
-                "cta": "Mock CTA",
-                "risk_flags": [],
-                "rewrite_suggestion": ""
-            }
-        
-        if "outline_5" in prompt:
-            # Script Gen Mock
-            return {
-                "outline_5": {
-                    "start": "Intro",
-                    "development": "Body",
-                    "crisis": "Crisis",
-                    "climax": "Climax",
-                    "ending": "Ending"
-                },
-                "title": "Mock Script Title",
-                "sections": [
-                    {"time_code":"00:00 - 05:00","section_name":"Intro","script":"Hello this is a mock script."}
-                ],
-                "ending_question": "Any questions?"
-            }
-            
-        return {}
-
-    url = "https://api.openai.com/v1/chat/completions"
-    headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }

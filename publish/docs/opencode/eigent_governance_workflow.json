@@ -1,0 +1,247 @@
+{
+  "workflow": {
+    "name": "OpenCode Strict Evidence Generator",
+    "version": "1.0.0",
+    "description": "TravelKit/OpenCode 거버넌스용 자동 증거 생성 및 PR 검증 워크플로",
+    "trigger": {
+      "type": "manual",
+      "input_schema": {
+        "pr_number": {
+          "type": "integer",
+          "required": true,
+          "description": "검증할 PR 번호"
+        },
+        "repo": {
+          "type": "string",
+          "default": "sunwoopark0512/travelkit",
+          "description": "GitHub 저장소"
+        }
+      }
+    }
+  },
+
+  "agents": {
+    "browser_agent": {
+      "type": "builtin:browser",
+      "name": "GitHub Evidence Collector",
+      "description": "PR 정보, Checks, Comments, Actions 수집",
+      "tools": ["github_mcp", "web_scraper"],
+      "tasks": [
+        {
+          "id": "collect_pr_info",
+          "action": "gh pr view {{pr_number}} --json files,headRefName,title,body,comments",
+          "output": "pr_info"
+        },
+        {
+          "id": "collect_checks",
+          "action": "gh pr checks {{pr_number}}",
+          "output": "checks_snapshot"
+        },
+        {
+          "id": "collect_latest_run",
+          "action": "gh run list --branch {{pr_info.headRefName}} --limit 1 --json conclusion,url",
+          "output": "latest_run_meta"
+        }
+      ]
+    },
+
+    "developer_agent": {
+      "type": "builtin:developer",
+      "name": "Evidence Generator Executor",
+      "description": "로컬 스크립트 실행 및 로그 정제",
+      "tools": ["terminal_mcp", "file_system"],
+      "working_directory": "{{repo_root}}",
+      "tasks": [
+        {
+          "id": "run_evidence_generator",
+          "action": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/generate_evidence_strict.ps1 -PrNumber {{pr_number}}",
+          "output": "evidence_log",
+          "timeout_seconds": 120
+        },
+        {
+          "id": "validate_diff_scope",
+          "action": "gh pr view {{pr_number}} --json files --jq '.files[].path'",
+          "output": "diff_after_scope",
+          "validation": {
+            "allowed_patterns": [
+              "docs/opencode/**",
+              "docs/governance/**",
+              "tools/**",
+              "apps/android/**",
+              "new-backend/**"
+            ],
+            "on_violation": "flag_for_review"
+          }
+        }
+      ]
+    },
+
+    "document_agent": {
+      "type": "builtin:document",
+      "name": "10-Header Report Builder",
+      "description": "Strict Evidence 10 헤더 템플릿 채움 및 검증",
+      "tools": ["file_system", "markdown_processor"],
+      "tasks": [
+        {
+          "id": "verify_10_headers",
+          "action": "validate_headers",
+          "input": "outputs/oracle_excerpt_pr{{pr_number}}.md",
+          "required_headers": [
+            "[EVIDENCE] CHECKS_SNAPSHOT (STRICT)",
+            "[EVIDENCE] LATEST_RUN_META",
+            "[EVIDENCE] DIFF_AFTER (Scope)",
+            "[EVIDENCE] ROLE_CONTRACT_LEDGER_RULE_EXCERPT",
+            "[EVIDENCE] PROJECT_OVERVIEW_MD",
+            "[EVIDENCE] PROJECT_LEDGER_MD",
+            "[EVIDENCE] AIRTABLE_SYNC_LOG",
+            "[EVIDENCE] STICKY_VERIFY",
+            "[EVIDENCE] COMMAND_LOG",
+            "[EVIDENCE] FINAL_VERDICT"
+          ],
+          "output": "header_validation_result"
+        },
+        {
+          "id": "generate_verdict",
+          "action": "compute_verdict",
+          "input": {
+            "checks": "{{checks_snapshot}}",
+            "headers": "{{header_validation_result}}",
+            "diff_scope": "{{diff_after_scope}}"
+          },
+          "output": "verdict"
+        }
+      ]
+    }
+  },
+
+  "gates": {
+    "scope_guard": {
+      "description": "DIFF_AFTER 스코프 검증 게이트",
+      "condition": "all(diff_after_scope, item => matches_allowed_pattern(item))",
+      "on_pass": "continue",
+      "on_fail": {
+        "action": "hitl_approval",
+        "message": "❌ Off-scope 파일 감지: {{failing_files}}. 승인 또는 수정 필요.",
+        "timeout_hours": 24
+      }
+    },
+
+    "header_completeness_gate": {
+      "description": "10 헤더 완전성 검증 게이트",
+      "condition": "header_validation_result.all_present == true",
+      "on_pass": "continue",
+      "on_fail": {
+        "action": "hitl_approval",
+        "message": "❌ 누락된 헤더: {{missing_headers}}. PASS_NA 사유 입력 필요.",
+        "require_reason": true
+      }
+    },
+
+    "final_verdict_gate": {
+      "description": "최종 Oracle 판정 게이트",
+      "condition": "verdict.status == 'PASS'",
+      "on_pass": {
+        "action": "auto_upload",
+        "commands": [
+          "gh pr comment {{pr_number}} --body-file outputs/oracle_excerpt_pr{{pr_number}}.md"
+        ]
+      },
+      "on_fail": {
+        "action": "hitl_review",
+        "message": "Oracle 판정 실패. {{verdict.failures}} 확인 필요."
+      }
+    }
+  },
+
+  "mcp_tools": {
+    "github_mcp": {
+      "type": "builtin",
+      "config": {
+        "auth": "{{env.GITHUB_TOKEN}}",
+        "default_repo": "{{repo}}"
+      },
+      "capabilities": [
+        "pr_view", "pr_checks", "pr_comment", 
+        "run_list", "actions_logs"
+      ]
+    },
+
+    "terminal_mcp": {
+      "type": "builtin",
+      "config": {
+        "shell": "powershell",
+        "working_dir": "{{repo_root}}",
+        "timeout_default": 60
+      },
+      "capabilities": [
+        "execute_command", "read_output", "kill_process"
+      ]
+    },
+
+    "custom_governance_mcp": {
+      "type": "custom",
+      "path": "./tools/governance_mcp.js",
+      "capabilities": [
+        "validate_diff_scope",
+        "validate_10_headers",
+        "compute_pass_na",
+        "format_oracle_excerpt"
+      ]
+    }
+  },
+
+  "hitl_config": {
+    "enabled": true,
+    "channels": {
+      "slack": {
+        "webhook": "{{env.SLACK_WEBHOOK}}",
+        "channel": "#travelkit-governance"
+      },
+      "in_app": {
+        "notification_sound": true,
+        "require_acknowledgment": true
+      }
+    },
+    "approval_rules": {
+      "pass_na": {
+        "require_reason": true,
+        "min_reason_length": 20,
+        "allowed_approvers": ["sunwoopark0512"]
+      },
+      "scope_exception": {
+        "require_justification": true,
+        "notify_on_approval": true
+      }
+    }
+  },
+
+  "outputs": {
+    "evidence_bundle": {
+      "path": "outputs/evidence_bundle_pr{{pr_number}}.txt",
+      "encoding": "utf-8"
+    },
+    "oracle_excerpt": {
+      "path": "outputs/oracle_excerpt_pr{{pr_number}}.md",
+      "encoding": "utf-8",
+      "auto_upload_to_pr": true
+    },
+    "workflow_log": {
+      "path": "outputs/eigent_workflow_pr{{pr_number}}.json",
+      "include": ["timestamps", "agent_outputs", "gate_results", "hitl_decisions"]
+    }
+  },
+
+  "notifications": {
+    "on_complete": {
+      "verdict_pass": {
+        "message": "✅ PR #{{pr_number}} Oracle PASS - Ready to merge",
+        "channels": ["slack", "in_app"]
+      },
+      "verdict_fail": {
+        "message": "❌ PR #{{pr_number}} Oracle FAIL - Review required",
+        "channels": ["slack", "in_app"],
+        "include_details": true
+      }
+    }
+  }
+}

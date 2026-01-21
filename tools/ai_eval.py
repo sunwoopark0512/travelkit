@@ -18,57 +18,44 @@ except ImportError:
     from tools.llm_client import call_llm_json, LLMError, backoff_sleep
 
 # Tabs & headers
-EVAL_HEADERS = ["Date","IdemKey","Title","ScoreTotal","Category","FormatReco","NextAction","EvalJson","Model","PromptVer"]
-QUEUE_HEADERS = ["Date","IdemKey","Title","Body","Priority","Channel","Status","Notes"]
+# EVAL_LOG now acts as "Tango Insights Log"
+EVAL_HEADERS = ["Date","IdemKey","Title","Type","SafetyLevel","InsightQuality","NextAction","EvalJson","Model","PromptVer"]
+QUEUE_HEADERS = ["Date","IdemKey","Title","Body","Priority","Tag","Status","Notes"]
 
 def compute_hash(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()[:12]
 
-def make_eval_prompt(title: str, body: str) -> str:
-    # Use standard format for prompts
+def make_tango_eval_prompt(title: str, body: str) -> str:
+    # Persona: Tango Somatic Coach
     return f"""
 # Role
-당신은 냉철한 콘텐츠 전략가이자 Product Owner입니다. 입력된 아이디어를 평가하고 반드시 JSON만 출력합니다.
+You are a 'Tango Somatic Coach'. Your goal is to help a 50-60s dancer analyze their practice notes for body awareness, safety, and joy.
 
 # Input
 - Title: {title}
 - Body: {body}
 
-# Rules
-- 출력은 반드시 '유효한 JSON 1개'만. 마크다운/설명/여분 텍스트 금지.
-- 모든 필드를 반드시 채우기. 누락 금지.
-- 점수 범위: 각 0-20, score_total은 합(0-100).
+# Analysis Goals
+1. **Type**: Classify the note (Physical_Sensation, Emotional_State, Musicality, Partnership, Risk_Signal).
+2. **Safety Level**: 0 (Safe) to 10 (High Injury Risk). High risk if pain/tension is mentioned.
+3. **Insight Quality**: 0-100. How deep is the somatic awareness? (e.g. "hurt" = low, "kneecap alignment felt off" = high).
 
 # Output JSON Schema
 {{
-  "score_total": 0,
-  "scores": {{"novelty":0,"pain":0,"pay":0,"repeatability":0,"ease":0}},
-  "category": "money|family|relationship|society|philosophy|health|other",
-  "format_reco": "30m_narration|shorts|blog|email|product",
-  "hook": "",
-  "angle": "",
-  "cta": "",
-  "risk_flags": [],
-  "next_action": "QUEUE|REWRITE|DROP",
-  "rewrite_suggestion": ""
+    "type": "Physical|Emotional|Musical|Partner|Risk",
+    "safety_level": 0,
+    "insight_quality": 0,
+    "key_muscle_or_joint": "e.g. Knee, Lower Back, None",
+    "coaching_tip": "One sentence advice based on Alexander Technique or Yoga",
+    "next_action": "ARCHIVE"
 }}
 """.strip()
 
 def validate_eval_json(d: Dict[str, Any]) -> Tuple[bool, str]:
-    required = ["score_total","scores","category","format_reco","next_action"]
+    required = ["type", "safety_level", "insight_quality", "coaching_tip"]
     for k in required:
         if k not in d:
             return False, f"missing:{k}"
-    scores = d.get("scores", {})
-    for sk in ["novelty","pain","pay","repeatability","ease"]:
-        v = scores.get(sk, None)
-        if not isinstance(v, int):
-            return False, f"scores.{sk} not int"
-        if v < 0 or v > 20:
-            return False, f"scores.{sk} out of range"
-    st = d.get("score_total")
-    if not isinstance(st, int) or st < 0 or st > 100:
-        return False, "score_total out of range"
     return True, "ok"
 
 def already_evaluated(eval_rows, idem: str, prompt_ver: str) -> bool:
@@ -79,16 +66,16 @@ def already_evaluated(eval_rows, idem: str, prompt_ver: str) -> bool:
     return False
 
 def main():
-    ap = argparse.ArgumentParser(description="AI Evaluator")
+    ap = argparse.ArgumentParser(description="Tango Insight Evaluator")
     ap.add_argument("--sheet-key", required=True)
     ap.add_argument("--tab", default="INBOX")
     ap.add_argument("--out-tab", default="EVAL_LOG")
     ap.add_argument("--queue-tab", default="CONTENT_QUEUE")
     ap.add_argument("--write-queue", action="store_true")
-    ap.add_argument("--limit", type=int, default=20)
+    ap.add_argument("--limit", type=int, default=10)
     ap.add_argument("--provider", default="openai")
     ap.add_argument("--model", default="gpt-4o-mini")
-    ap.add_argument("--prompt-ver", default="v1")
+    ap.add_argument("--prompt-ver", default="v1_tango")
     ap.add_argument("--verify", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
@@ -98,21 +85,17 @@ def main():
 
     inbox_ws = ensure_tab(sheet, args.tab, ["Date","Title","Body","IdemKey"])
     eval_ws  = ensure_tab(sheet, args.out_tab, EVAL_HEADERS)
+    # CONTENT_QUEUE will store "Journal Candidates"
     queue_ws = ensure_tab(sheet, args.queue_tab, QUEUE_HEADERS) if args.write_queue else None
 
     inbox = read_rows(inbox_ws)
     eval_rows = read_rows(eval_ws)
     
-    # We only care about processed keys if they match the current prompt_ver to allow re-eval with new prompts
-    # But for now, simple IDEM check
-    
     processed = 0
-    # Start iterating from row 2 (index 1 of list, since list[0] is header)
     for row in inbox[1:]:
         if processed >= args.limit:
             break
             
-        # Robust row reading
         title = (row[1] if len(row) > 1 else "") or ""
         body  = (row[2] if len(row) > 2 else "") or ""
         idem  = (row[3] if len(row) > 3 else "") or compute_hash(title + "\n" + body)
@@ -124,68 +107,66 @@ def main():
             continue
 
         if already_evaluated(eval_rows, idem, args.prompt_ver):
-            print(f"SKIP: already evaluated idem={idem} prompt_ver={args.prompt_ver}")
+            print(f"SKIP: already evaluated idem={idem}")
             continue
 
-        prompt = make_eval_prompt(title, body)
+        prompt = make_tango_eval_prompt(title, body)
 
         d = None
         last_err = None
         
         if args.dry_run:
-            print(f"DRY-RUN: Would evaluate '{title}'")
-            # Mock success for dry run
+            print(f"DRY-RUN: Would analyze '{title}'")
             processed += 1
             continue
 
-        # Retry Loop
-        for attempt in range(1, 6):
+        for attempt in range(1, 4):
             try:
                 d = call_llm_json(prompt, provider=args.provider, model=args.model)
                 ok, reason = validate_eval_json(d)
                 if not ok:
-                    raise LLMError(f"Invalid eval json: {reason}")
+                    raise LLMError(f"Invalid json: {reason}")
                 break
             except Exception as e:
                 last_err = e
-                print(f"WARN: eval attempt {attempt} failed: {e}")
-                if attempt < 5:
+                if attempt < 3:
                     backoff_sleep(attempt)
-                else:
-                    d = None
 
         if d is None:
             print(f"FAIL: eval idem={idem} err={last_err}")
             continue
 
-        # Parse & Save
         try:
-            score_total = int(d["score_total"])
-            category = d["category"]
-            format_reco = d["format_reco"]
-            next_action = d["next_action"]
-
+            insight_q = int(d["insight_quality"])
+            safety = int(d["safety_level"])
+            tango_type = d["type"]
+            coaching = d["coaching_tip"]
+            
             ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # EVAL_HEADERS = ["Date","IdemKey","Title","Type","SafetyLevel","InsightQuality","NextAction","EvalJson","Model","PromptVer"]
             eval_row = [
-                ts, idem, title,
-                str(score_total), category, format_reco, next_action,
+                ts, idem, title, 
+                tango_type, str(safety), str(insight_q), 
+                "ARCHIVE", 
                 json.dumps(d, ensure_ascii=False),
                 args.model, args.prompt_ver
             ]
 
             append_row(eval_ws, eval_row)
             eval_rows.append(eval_row)
-            print(f"SUCCESS: wrote EVAL_LOG idem={idem} score={score_total}")
+            print(f"SUCCESS: analyzed idem={idem} type={tango_type} safety={safety}")
 
+            # If write-queue is on, we queue it for "Journal Generation"
+            # Priority: Safety risks get high priority (to reflect on pain), High Insight get high priority.
             if args.write_queue and queue_ws:
-                if next_action == "QUEUE":
-                    priority = 5 if score_total >= 85 else 4 if score_total >= 75 else 3
-                    channel = "YouTube" if format_reco == "30m_narration" else "Shorts"
-                    queue_row = [ts, idem, title, body, str(priority), channel, "READY", ""]
-                    append_row(queue_ws, queue_row)
-                    print(f"SUCCESS: queued CONTENT_QUEUE idem={idem}")
-                else:
-                    print(f"INFO: not queued (next_action={next_action}) idem={idem}")
+                priority = 3
+                if safety >= 5: priority = 1 # Urgent reflection needed on pain
+                elif insight_q >= 80: priority = 2 # Good insight to preserve
+                
+                # Tag = Category
+                queue_row = [ts, idem, title, body, str(priority), tango_type, "READY", coaching]
+                append_row(queue_ws, queue_row)
+                print(f"SUCCESS: queued for Journal idem={idem}")
             
             processed += 1
             
