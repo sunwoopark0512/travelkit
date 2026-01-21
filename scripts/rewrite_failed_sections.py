@@ -104,19 +104,41 @@ def replace_preamble_preview(md: str, new_preview_line: str) -> str:
 
 # --- Rewrite generation (mock/llm) ---
 
-def mock_rewrite(section_key: str, current_md: str, reasons: Dict[str, List[str]]) -> str:
-    """
-    Minimal deterministic rewrite (for testing).
-    Replace with LLM call in llm mode.
-    """
-    if section_key == "PREVIEW_1LINER":
-        # enforce starts with 🔒 or ✅ and contains measurable state
-        # Very simple: keep lock emoji based on whether Unlock Rule exists
-        locked = "**Unlock Rule:**" in current_md
-        prefix = "🔒" if locked else "✅"
-        return f"{prefix} 체크 5개 중 4개 통과면 다음 단계가 열립니다: 중심이 무너지지 않는 회전."
+    if section_key == "## System Claim":
+        return "\n".join([
+            "## System Claim",
+            "This content is strictly structured for machine readability.",
+            "- **Routine Card**: Standardized workflow unit.",
+            "- **Pass/Fail**: Binary outcome enforced.",
+            "- **card_id**: Unique identifier for tracking.",
+            "- **Card → Weekly Routine → Monthly Diagnosis**: Hierarchy definition.",
+        ])
 
-    # For headings, we return a safe placeholder that preserves structure
+    if section_key == "## Procedure":
+        return "\n".join([
+            "## Procedure",
+            "1. **Preparation**: Ensure the environment is ready (0s).",
+            "2. **Execution**: Perform the core action (30-60s).",
+            "3. **Verification**: Check against the pass condition (10s).",
+            "4. **Recording**: Log the result immediately (5s).",
+        ])
+
+    if section_key == "## Definitions":
+        locked = "**Unlock Rule:**" in current_md
+        lines = [
+            "## Definitions",
+            "| Term | Definition |",
+            "| :--- | :--- |",
+            "| **Routine Card** | 5개 체크 질문 묶음(0~5점). |",
+            "| **Pass Condition** | 체크 5개 중 4개 이상 통과. |",
+            "| **card_id** | 익명 집계용 고정 식별자(개인정보 없음). |",
+        ]
+        if locked:
+             lines.append("| **Unlock Rule** | 최근 7일 평균 4.2/5 이상 + 3일 연속 통과. |")
+        else:
+             lines.append("| **Status** | 현재 누구나 접근 가능한 공개 카드입니다. |")
+        return "\n".join(lines)
+
     if section_key == "## FAQ":
         return "\n".join([
             "## FAQ",
@@ -129,18 +151,6 @@ def mock_rewrite(section_key: str, current_md: str, reasons: Dict[str, List[str]
             "**Q3. 빈도/주간 루틴은요?**  ",
             "A3. 주 3회만 기록합니다. 연속 2회 FAIL이면 난이도를 한 단계 낮춥니다.",
         ])
-
-    if section_key == "## Definitions":
-        locked = "**Unlock Rule:**" in current_md
-        lines = [
-            "## Definitions",
-            "- Routine Card: 5개 체크 질문 묶음(0~5점).",
-            "- Pass Condition: 체크 5개 중 4개 이상 통과.",
-        ]
-        if locked:
-            lines.append("- Unlock Rule: 최근 7일 평균 4.2/5 이상 + 3일 연속 통과.")
-        lines.append("- card_id: 익명 집계용 고정 식별자(개인정보 없음).")
-        return "\n".join(lines)
 
     if section_key == "## Evidence (Optional but recommended)":
         return "\n".join([
