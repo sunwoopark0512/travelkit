@@ -1,15 +1,21 @@
 ﻿{
-  "ticket_id": "TANGO_AXIS_HARDLOCK",
-  "mode": "feature",
-  "ops": { "branch": "ops/safe-ralph-night-shift" },
-  "target": {
-    "branch": "hardlock/tango-axis-position",
-    "mkdocs_route": "auto",
-    "evidence_policy": "pack_only",
-    "verify_commands": [
-      "python scripts/export_cards.py",
-      "python scripts/local_content_batch.py --series tango_axis --variants 3"
-    ]
-  },
-  "limits": { "max_iters": 5, "same_fail_limit": 3, "max_hours": 6 }
+    "ticket_id":  "TANGO_AXIS_HARDLOCK",
+    "mode":  "feature",
+    "ops":  {
+                "branch":  "ops/safe-ralph-night-shift"
+            },
+    "target":  {
+                   "branch":  "hardlock/tango-axis-position",
+                   "mkdocs_route":  "auto",
+                   "evidence_policy":  "pack_only",
+                   "verify_commands":  [
+                                           "python scripts/local_content_batch.py --series tango_axis --variants 3",
+                                           "python scripts/export_cards.py"
+                                       ]
+               },
+    "limits":  {
+                   "max_iters":  5,
+                   "same_fail_limit":  3,
+                   "max_hours":  6
+               }
 }
