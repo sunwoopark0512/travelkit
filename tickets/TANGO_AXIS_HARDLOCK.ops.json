@@ -1,0 +1,17 @@
+{
+    "ticket_id": "TANGO_AXIS_HARDLOCK.ops",
+    "mode": "ops",
+    "ops": {
+        "branch": "ops/safe-ralph-night-shift"
+    },
+    "target": {
+        "branch": "hardlock/tango-axis-position",
+        "mkdocs_route": "auto",
+        "evidence_policy": "pack_only"
+    },
+    "limits": {
+        "max_iters": 5,
+        "same_fail_limit": 3,
+        "max_hours": 6
+    }
+}

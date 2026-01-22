@@ -11,7 +11,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-function Fail([string]$msg) { Write-Host "PACK_EVIDENCE_FAIL: $msg"; exit 1 }
+function Die([string]$msg) { Write-Host "PACK_EVIDENCE_FAIL: $msg"; exit 1 }
 function Ensure-Dir([string]$p) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
 
 function Read-Ticket([string]$path) {
@@ -32,18 +32,19 @@ try {
     $ticketAbs = (Resolve-Path $TicketPath).Path
     $t = Read-Ticket $ticketAbs
 
-    if (-not (Test-Path $TargetWorktree)) { Fail "TargetWorktree not found: $TargetWorktree" }
+    if (-not (Test-Path $TargetWorktree)) { Die "TargetWorktree not found: $TargetWorktree" }
     Ensure-Dir $RunDir
 
     $eviRoot = Join-Path $RunDir "evidence"
     Ensure-Dir $eviRoot
 
-    # Repro snapshot: git diff from target worktree HEAD (should be clean, but snapshot anyway)
+    # Snapshot: git status + diff (from target worktree)
     $cwd = Get-Location
     try {
         Set-Location $TargetWorktree
-        $diff = git diff --patch HEAD
-        $diff | Set-Content -Encoding UTF8 (Join-Path $RunDir "git_diff_from_head.patch")
+        (git status --porcelain=v1) | Set-Content -Encoding UTF8 (Join-Path $RunDir "git_status_porcelain.txt")
+        (git rev-parse HEAD)        | Set-Content -Encoding UTF8 (Join-Path $RunDir "git_head.txt")
+        (git diff --patch HEAD)     | Set-Content -Encoding UTF8 (Join-Path $RunDir "git_diff_from_head.patch")
     }
     finally { Set-Location $cwd }
 
@@ -51,31 +52,30 @@ try {
         @"
 EVIDENCE_POLICY=external
 NOTE: Provide external links in PR description. Local pack includes only pointers.
-TARGET_BRANCH=$($t.branch)
 TICKET_ID=$($t.ticket_id)
+TARGET_BRANCH=$($t.target.branch)
 "@ | Set-Content -Encoding UTF8 (Join-Path $RunDir "evidence_policy.txt")
         Write-Host "PACK_EVIDENCE_OK: external"
         exit 0
     }
 
-    # Copy candidate sources from target worktree (gitignore-friendly copies)
-    Copy-DirIfExists (Join-Path $TargetWorktree "outputs/evidence") (Join-Path $eviRoot "outputs_evidence")
-    Copy-DirIfExists (Join-Path $TargetWorktree "web/dashboard") (Join-Path $eviRoot "web_dashboard")
-    Copy-DirIfExists (Join-Path $TargetWorktree "outputs/night_shift") (Join-Path $eviRoot "outputs_night_shift")
+    # Copy evidence-like directories from target worktree (never forces git add)
+    Copy-DirIfExists (Join-Path $TargetWorktree "outputs/evidence")     (Join-Path $eviRoot "outputs_evidence")
+    Copy-DirIfExists (Join-Path $TargetWorktree "outputs/night_shift")  (Join-Path $eviRoot "outputs_night_shift")
+    Copy-DirIfExists (Join-Path $TargetWorktree "web/dashboard")        (Join-Path $eviRoot "web_dashboard")
 
     @"
 EVIDENCE_POLICY=$Policy
-NOTE: This pack is a filesystem archive under outputs/night_shift/*.
-It does NOT force git add of outputs/ (gitignore-friendly).
-TARGET_BRANCH=$($t.branch)
+NOTE: Files are copied into outputs/night_shift/* and are gitignore-friendly.
 TICKET_ID=$($t.ticket_id)
+TARGET_BRANCH=$($t.target.branch)
 "@ | Set-Content -Encoding UTF8 (Join-Path $RunDir "evidence_policy.txt")
 
     Write-Host "PACK_EVIDENCE_OK: $Policy"
     exit 0
 }
 catch {
-    Fail ("Unhandled error: " + $_.Exception.Message)
+    Die ("Unhandled error: " + $_.Exception.Message)
 }
 param(
     [string]$TicketId,
