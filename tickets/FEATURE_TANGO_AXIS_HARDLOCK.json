@@ -1,0 +1,57 @@
+{
+    "ticket_id": "FEATURE_TANGO_AXIS_HARDLOCK",
+    "repo": "sunwoopark0512/travelkit",
+    "pr_number": 9,
+    "branch": "hardlock/tango-axis-position",
+    "mode": "feature",
+    "verify_kind": "feature",
+    "max_iters": 5,
+    "max_hours": 6,
+    "same_fail_limit": 3,
+    "verify_commands": [
+        "python scripts/export_cards.py",
+        "python scripts/local_content_batch.py --series tango_axis --variants 3"
+    ],
+    "oracle": {
+        "source": "local_only",
+        "pass_regex": "Verdict:\\s*(✅\\s*)?PASS"
+    },
+    "policy": {
+        "evidence": "pack_only",
+        "mkdocs_route": "auto",
+        "ops_allow": [
+            "tools/night_shift/",
+            "tickets/",
+            "docs/ssot/"
+        ],
+        "ops_deny": [
+            "scripts/",
+            "web/",
+            "new-backend/",
+            "apps/"
+        ],
+        "target_allow": [
+            "scripts/",
+            "docs/",
+            "web/dashboard/",
+            "outputs/"
+        ],
+        "target_deny": [
+            "tools/night_shift/",
+            "tickets/",
+            "new-backend/",
+            "apps/"
+        ],
+        "deny_exact": [
+            ".gitignore",
+            "mkdocs.yml"
+        ],
+        "deny_regex": [
+            "^\\.github/"
+        ]
+    },
+    "worktree": {
+        "root": ".worktrees",
+        "name": "FEATURE_TANGO_AXIS_HARDLOCK"
+    }
+}

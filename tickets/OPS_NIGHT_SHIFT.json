@@ -1,0 +1,44 @@
+{
+    "ticket_id": "OPS_NIGHT_SHIFT",
+    "repo": "sunwoopark0512/travelkit",
+    "pr_number": 9,
+    "branch": "ops/safe-ralph-night-shift",
+    "mode": "ops",
+    "verify_kind": "ops_only",
+    "max_iters": 1,
+    "max_hours": 1,
+    "same_fail_limit": 1,
+    "verify_commands": [],
+    "oracle": {
+        "source": "local_only",
+        "pass_regex": "Verdict:\\s*(✅\\s*)?PASS"
+    },
+    "policy": {
+        "evidence": "pack_only",
+        "mkdocs_route": "auto",
+        "ops_allow": [
+            "tools/night_shift/",
+            "tickets/",
+            "docs/ssot/"
+        ],
+        "ops_deny": [
+            "scripts/",
+            "web/",
+            "new-backend/",
+            "apps/"
+        ],
+        "target_allow": [],
+        "target_deny": [],
+        "deny_exact": [
+            ".gitignore",
+            "mkdocs.yml"
+        ],
+        "deny_regex": [
+            "^\\.github/"
+        ]
+    },
+    "worktree": {
+        "root": ".worktrees",
+        "name": "OPS_NIGHT_SHIFT"
+    }
+}
