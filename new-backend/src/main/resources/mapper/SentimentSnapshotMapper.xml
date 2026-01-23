@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.check.mapper.SentimentSnapshotMapper">
+    <resultMap id="BaseResultMap" type="com.example.check.pojo.SentimentSnapshot">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="job_id" property="jobId" jdbcType="INTEGER"/>
+        <result column="platform" property="platform" jdbcType="VARCHAR"/>
+        <result column="positive_ratio" property="positiveRatio" jdbcType="INTEGER"/>
+        <result column="neutral_ratio" property="neutralRatio" jdbcType="INTEGER"/>
+        <result column="negative_ratio" property="negativeRatio" jdbcType="INTEGER"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.example.check.pojo.SentimentSnapshot" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sentiment_snapshots (job_id, platform, positive_ratio, neutral_ratio, negative_ratio)
+        VALUES (#{jobId}, #{platform}, #{positiveRatio}, #{neutralRatio}, #{negativeRatio})
+    </insert>
+
+    <select id="selectByJobId" resultMap="BaseResultMap">
+        SELECT * FROM sentiment_snapshots WHERE job_id = #{jobId}
+    </select>
+
+    <delete id="deleteByJobId">
+        DELETE FROM sentiment_snapshots WHERE job_id = #{jobId}
+    </delete>
+</mapper>

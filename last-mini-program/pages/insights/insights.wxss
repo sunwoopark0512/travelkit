@@ -1,0 +1,65 @@
+.container {
+  padding: 30rpx;
+  background-color: #f3f4f6;
+  min-height: 100vh;
+}
+.header { text-align: center; margin-bottom: 40rpx; }
+.title { font-size: 40rpx; font-weight: bold; display: block; }
+.subtitle { font-size: 24rpx; color: #666; }
+
+.scan-card {
+  background: white;
+  padding: 30rpx;
+  border-radius: 16rpx;
+  margin-bottom: 40rpx;
+}
+.url-input {
+  background: #f9f9f9;
+  padding: 20rpx;
+  border-radius: 8rpx;
+  margin-bottom: 20rpx;
+  border: 1px solid #eee;
+}
+.btn-primary { background: #4f46e5; color: white; }
+
+.section-title { font-size: 32rpx; font-weight: bold; margin-bottom: 20rpx; }
+.job-card {
+  background: white;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.job-info { display: flex; flex-direction: column; }
+.job-url { font-weight: bold; font-size: 28rpx; }
+.job-date { font-size: 22rpx; color: #999; }
+.status-badge { font-size: 24rpx; padding: 4rpx 12rpx; border-radius: 8rpx; background: #eee; }
+.status-badge.success { background: #d1fae5; color: #065f46; }
+.status-badge.pending { background: #fffbeb; color: #92400e; }
+
+.dashboard-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 100;
+}
+.dashboard-content {
+  width: 90%; height: 80%;
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  display: flex; flex-direction: column;
+}
+.dash-header { display: flex; justify-content: space-between; margin-bottom: 20rpx; }
+.dash-title { font-weight: bold; font-size: 30rpx; }
+.dash-scroll { flex: 1; overflow-y: auto; }
+.dash-section { margin-bottom: 40rpx; }
+.sec-head { display: block; font-weight: bold; margin-bottom: 16rpx; color: #4f46e5; }
+.data-row { margin-bottom: 16rpx; }
+.minor-text { font-size: 22rpx; color: #666; margin-left: 10rpx; }
+.keyword-tag {
+  display: inline-block; background: #e0e7ff; color: #3730a3;
+  padding: 8rpx 16rpx; border-radius: 999px; margin: 0 10rpx 10rpx 0; font-size: 24rpx;
+}

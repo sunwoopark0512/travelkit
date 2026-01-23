@@ -1,10 +1,7 @@
-package com.example.check.controller;
+﻿package com.example.check.controller;
 
 import com.example.check.config.JwtEdDsaUtil;
 
-import com.example.check.service.UserService;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -27,9 +24,6 @@ import java.util.List;
 @RequestMapping("/api/test")
 @CrossOrigin(origins = "*")
 public class TestController {
-
-    @Autowired
-    private UserService userService;
 
     /**
      * 获取和风天气EdDSA JWT令牌（调试专用）
@@ -125,6 +119,7 @@ public class TestController {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Accept-Encoding", "gzip");
         String url = String.format("https://%s/v7/weather/30d?location=%s", host, locationId);
+        java.util.Objects.requireNonNull(url, "URL must not be null");
         HttpEntity<String> entity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> respWeather;
         try {
@@ -141,6 +136,7 @@ public class TestController {
             } else {
                 json = new String(respWeather.getBody(), StandardCharsets.UTF_8);
             }
+            @SuppressWarnings("null")
             MediaType jsonUtf8 = new MediaType("application", "json", StandardCharsets.UTF_8);
             return ResponseEntity.ok()
                     .contentType(jsonUtf8)
@@ -150,3 +146,4 @@ public class TestController {
         }
     }
 }
+
