@@ -120,7 +120,6 @@ public class TestController {
         headers.set("Accept-Encoding", "gzip");
         String url = String.format("https://%s/v7/weather/30d?location=%s", host, locationId);
         java.util.Objects.requireNonNull(url, "URL must not be null");
-        java.util.Objects.requireNonNull(url, "URL must not be null");
         HttpEntity<String> entity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> respWeather;
         try {
@@ -138,7 +137,6 @@ public class TestController {
                 json = new String(respWeather.getBody(), StandardCharsets.UTF_8);
             }
             @SuppressWarnings("null")
-            @SuppressWarnings("null")
             MediaType jsonUtf8 = new MediaType("application", "json", StandardCharsets.UTF_8);
             return ResponseEntity.ok()
                     .contentType(jsonUtf8)
@@ -148,3 +146,4 @@ public class TestController {
         }
     }
 }
+
