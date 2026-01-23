@@ -1,0 +1,19 @@
+﻿{
+  "ticket_id": "TANGO_AXIS_HARDLOCK",
+  "repo": "sunwoopark0512/travelkit",
+  "pr_number": 9,
+  "branch": "hardlock/tango-axis-position",
+  "max_iters": 5,
+  "max_hours": 6,
+  "same_fail_limit": 3,
+  "allow_paths": ["scripts/", "tools/", "docs/", "web/dashboard/", "tickets/", "outputs/"],
+  "verify_commands": [
+    "python scripts/export_cards.py",
+    "python scripts/local_content_batch.py --series tango_axis --variants 3"
+  ],
+  "oracle_pass": {
+    "evidence_headers": 10,
+    "require_final_verdict": true,
+    "pass_regex": "Verdict:\\s*(✅\\s*)?PASS"
+  }
+}
