@@ -404,7 +404,16 @@ try {
             $wt = New-TargetWorktree -repoRoot $root -ticketId $ticketId -mode $mode -targetBranch $targetBranch
 
             # ---- oracle gate check (runs in ops workspace, may inspect target worktree HEAD) ----
-            $gateOut = & (Join-Path $root "tools/night_shift/oracle_gate_check.ps1") -TicketPath $ticketAbs -TargetWorktree $wt 2>&1 | Out-String
+            $gateScript = Join-Path $root "tools/night_shift/oracle_gate_check.ps1"
+            $gateProcess = Start-Process -FilePath "powershell" -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $gateScript, "-TicketPath", $ticketAbs, "-TargetWorktree", $wt -PassThru -NoNewWindow -Wait
+            
+            # Since Start-Process with -Wait doesn't easily capture stdout without redirecting to file, 
+            # and we want to see output and exit code. 
+            # Reverting to & call but ensuring arguments are simple string.
+            # actually the previous error might be because $wt was an object or had spaces?
+            # Let's try explicit string casting and quoting.
+            
+            $gateOut = & powershell -NoProfile -ExecutionPolicy Bypass -Command "& '$gateScript' -TicketPath '$ticketAbs' -TargetWorktree '$wt'" 2>&1 | Out-String
 
             $gateExit = $LASTEXITCODE
             Add-Content -Encoding UTF8 (Join-Path $runInfo.run_dir "oracle_gate_stdout.txt") $gateOut
