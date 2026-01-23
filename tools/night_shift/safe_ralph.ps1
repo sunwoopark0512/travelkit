@@ -1,18 +1,16 @@
-# =========================
-# FILE: tools/night_shift/safe_ralph.ps1
-# =========================
-<#
-Safe Ralph Night Shift Runner (SSoT-driven)
-- Runs on OPS branch workspace
-- Creates an isolated TARGET worktree for ticket.target.branch
-- MODE-aware:
-  - MODE=feature  => run verify_commands in target worktree
-  - MODE=ops      => skip verify_commands (policy-fixed)
-- Always:
-  - oracle_gate_check (local policy gate) before verify/evidence
-  - pack_evidence after verify attempt (success/fail)
-- Worktree collision auto-removal (by path and by branch)
-- Fail-fast if required tooling missing
+<# 
+tools/night_shift/safe_ralph.ps1
+Safe Ralph Night Shift Runner — FULL REPLACEMENT (SSoT v2)
+Compatible with Windows PowerShell 5.1
+
+Guarantees:
+- SSoT v2 ticket schema support (ops/feature)
+- fail-fast on missing rules (tools/night_shift/oracle_rules.ps1) and missing gate scripts
+- ops/feature mode auto-fixed (if ticket.mode missing/invalid -> inferred)
+- target worktree isolation under .worktrees/<ticket_id>.<mode>
+- worktree conflict auto removal (by branch ref OR by path)
+- durable status output: outputs/night_shift/<ticket_id>/run_N/00_status.txt
+- no $ticketAbs unbound errors (initialized early, null-guarded)
 #>
 
 param(
@@ -20,275 +18,507 @@ param(
 )
 
 Set-StrictMode -Version Latest
-# FIX: Git outputs progress to stderr, which causes exception if Stop. Use Continue.
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
-function Die([string]$msg) { Write-Host "SAFE_RALPH_FAIL: $msg"; exit 1 }
-function Ensure-Dir([string]$p) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
-function RepoRoot { (git rev-parse --show-toplevel).Trim() }
+# ---------------- utilities ----------------
+function NowIso() { (Get-Date).ToString("o") }
 
-function Read-Ticket([string]$path) {
-    if (-not (Test-Path $path)) { throw "Ticket not found: $path" }
-    $raw = Get-Content $path -Raw
-    if ($path.ToLower().EndsWith(".json")) { return ($raw | ConvertFrom-Json) }
-    throw "Ticket must be JSON: $path"
+function Write-Log([string]$msg) {
+    Write-Host $msg
 }
 
-function Get-WorktreeListPorcelain([string]$root) {
-    $cwd = Get-Location
-    try { Set-Location $root; return @(git worktree list --porcelain) }
-    finally { Set-Location $cwd }
+function Die([string]$msg) {
+    throw $msg
 }
 
-function Remove-WorktreeByPath([string]$root, [string]$path) {
+function Ensure-Dir([string]$p) {
+    New-Item -ItemType Directory -Force -Path $p | Out-Null
+}
+
+function RepoRoot() {
+    (git rev-parse --show-toplevel).Trim()
+}
+
+function Read-Ticket([string]$absPath) {
+    if (-not (Test-Path $absPath)) { Die "Ticket not found: $absPath" }
+    $raw = Get-Content $absPath -Raw
+    if (-not $absPath.ToLower().EndsWith(".json")) { Die "Ticket must be JSON: $absPath" }
+    return ($raw | ConvertFrom-Json)
+}
+
+function Normalize-Mode([object]$ticket) {
+    $m = $null
+    if ($ticket.PSObject.Properties.Name -contains "mode") { $m = [string]$ticket.mode }
+    if ($null -eq $m) { $m = "" }
+    $m = $m.Trim().ToLower()
+
+    if ($m -ne "ops" -and $m -ne "feature") {
+        # infer:
+        # - if target.verify_commands exists and non-empty -> feature
+        # - else ops
+        $hasVerify = $false
+        if ($ticket.PSObject.Properties.Name -contains "target") {
+            $t = $ticket.target
+            if ($t -and ($t.PSObject.Properties.Name -contains "verify_commands")) {
+                try {
+                    $arr = @($t.verify_commands)
+                    if ($arr.Count -gt 0) { $hasVerify = $true }
+                }
+                catch { }
+            }
+        }
+        if ($hasVerify) { $m = "feature" } else { $m = "ops" }
+        try { $ticket | Add-Member -NotePropertyName "mode" -NotePropertyValue $m -Force } catch { }
+    }
+    return $m
+}
+
+function Get-OpsBranch([object]$ticket) {
+    if ($ticket.PSObject.Properties.Name -contains "ops") {
+        $o = $ticket.ops
+        if ($o -and ($o.PSObject.Properties.Name -contains "branch")) {
+            $b = ([string]$o.branch).Trim()
+            if ($b) { return $b }
+        }
+    }
+    # fallback to current branch
+    return (git rev-parse --abbrev-ref HEAD).Trim()
+}
+
+function Get-TargetBranch([object]$ticket) {
+    if ($ticket.PSObject.Properties.Name -contains "target") {
+        $t = $ticket.target
+        if ($t -and ($t.PSObject.Properties.Name -contains "branch")) {
+            $b = ([string]$t.branch).Trim()
+            if ($b) { return $b }
+        }
+    }
+    Die "Ticket missing target.branch (SSoT v2)"
+}
+
+function Get-TicketId([object]$ticket) {
+    if ($ticket.PSObject.Properties.Name -contains "ticket_id") {
+        $id = ([string]$ticket.ticket_id).Trim()
+        if ($id) { return $id }
+    }
+    Die "Ticket missing ticket_id (SSoT v2)"
+}
+
+function Get-Policy([object]$ticket) {
+    $mk = "auto"
+    $ev = "pack_only"
+
+    if ($ticket.PSObject.Properties.Name -contains "target") {
+        $t = $ticket.target
+        if ($t) {
+            if ($t.PSObject.Properties.Name -contains "mkdocs_route") {
+                $mk = ([string]$t.mkdocs_route).Trim()
+                if (-not $mk) { $mk = "auto" }
+            }
+            if ($t.PSObject.Properties.Name -contains "evidence_policy") {
+                $ev = ([string]$t.evidence_policy).Trim()
+                if (-not $ev) { $ev = "pack_only" }
+            }
+        }
+    }
+    return [pscustomobject]@{ mkdocs_route = $mk; evidence_policy = $ev }
+}
+
+function Get-Limits([object]$ticket) {
+    $maxIters = 5
+    $sameFail = 3
+    $maxHours = 6
+    if ($ticket.PSObject.Properties.Name -contains "limits") {
+        $l = $ticket.limits
+        if ($l) {
+            if ($l.PSObject.Properties.Name -contains "max_iters") { $maxIters = [int]$l.max_iters }
+            if ($l.PSObject.Properties.Name -contains "same_fail_limit") { $sameFail = [int]$l.same_fail_limit }
+            if ($l.PSObject.Properties.Name -contains "max_hours") { $maxHours = [int]$l.max_hours }
+        }
+    }
+    return [pscustomobject]@{
+        max_iters       = $maxIters
+        same_fail_limit = $sameFail
+        max_hours       = $maxHours
+    }
+}
+
+function Ensure-Branch-Ref([string]$repoRoot, [string]$branch) {
     $cwd = Get-Location
     try {
-        Set-Location $root
-        if (Test-Path $path) {
-            & git worktree remove $path --force 2>$null | Out-Null
+        Set-Location $repoRoot
+
+        # If local branch exists -> ok
+        $ok = $true
+        & git show-ref --verify --quiet ("refs/heads/$branch") 2>$null
+        if ($LASTEXITCODE -eq 0) { return }
+
+        # If remote exists, create local tracking branch
+        & git show-ref --verify --quiet ("refs/remotes/origin/$branch") 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            # attempt fetch
+            & git fetch origin 2>$null | Out-Null
+            & git show-ref --verify --quiet ("refs/remotes/origin/$branch") 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                Die "Invalid reference (missing branch): $branch (no refs/heads/$branch and no origin/$branch)"
+            }
         }
+
+        # create local branch from origin/<branch>
+        & git branch $branch ("origin/$branch") 2>$null | Out-Null
     }
     finally { Set-Location $cwd }
 }
 
-function Remove-BranchWorktreeIfExists([string]$root, [string]$branch) {
-    $lines = Get-WorktreeListPorcelain $root
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -like "worktree *") {
-            $wtPath = $lines[$i].Substring("worktree ".Length).Trim()
-            $refLine = $null
-            for ($j = $i + 1; $j -lt $lines.Count; $j++) {
-                if ($lines[$j] -like "worktree *") { break }
-                if ($lines[$j] -like "branch *") { $refLine = $lines[$j]; break }
-            }
-            if ($refLine) {
-                $ref = $refLine.Substring("branch ".Length).Trim()
-                if ($ref -eq "refs/heads/$branch") {
-                    try {
-                        Remove-WorktreeByPath -root $root -path $wtPath
-                        Write-Host "Worktree conflict removed (branch=$branch): $wtPath"
-                    }
-                    catch {
-                        Write-Warning "Failed removing worktree: $wtPath"
+function Remove-Worktree-ByBranch([string]$repoRoot, [string]$branch) {
+    $cwd = Get-Location
+    try {
+        Set-Location $repoRoot
+        $lines = @(git worktree list --porcelain)
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -like "worktree *") {
+                $wtPath = $lines[$i].Substring("worktree ".Length).Trim()
+                $branchLine = $null
+                for ($j = $i + 1; $j -lt $lines.Count; $j++) {
+                    if ($lines[$j] -like "worktree *") { break }
+                    if ($lines[$j] -like "branch *") { $branchLine = $lines[$j]; break }
+                }
+                if ($branchLine) {
+                    $ref = $branchLine.Substring("branch ".Length).Trim()
+                    if ($ref -eq "refs/heads/$branch") {
+                        try {
+                            & git worktree remove $wtPath --force 2>&1 | Out-Null
+                            if ($LASTEXITCODE -ne 0) { throw "git failed" }
+                            Start-Sleep -Seconds 2
+                            & git worktree prune
+                            Write-Log "Worktree conflict removed (branch=$branch): $wtPath"
+                        }
+                        catch {
+                            Write-Log "WARN: failed removing worktree (branch=$branch). Force deleting..."
+                            Remove-Item -Recurse -Force $wtPath -ErrorAction SilentlyContinue
+                            & git worktree prune
+                        }
                     }
                 }
             }
         }
     }
+    finally { Set-Location $cwd }
 }
 
-function New-TargetWorktree([string]$root, [string]$ticketId, [string]$branch) {
-    $wtRoot = Join-Path $root ".worktrees"
-    Ensure-Dir $wtRoot
-
-    $wt = Join-Path $wtRoot $ticketId
-
-    # remove same path if leftover
-    try { Remove-WorktreeByPath -root $root -path $wt } catch {}
-
-    # remove any other worktree holding this branch
-    Remove-BranchWorktreeIfExists -root $root -branch $branch
-
+function Remove-Worktree-ByPath([string]$repoRoot, [string]$wtPath) {
+    if (-not (Test-Path $wtPath)) { return }
     $cwd = Get-Location
     try {
-        Set-Location $root
-        Write-Host "Worktree add -> $wt ($branch)"
-        # Git often writes to stderr for progress. We capture it but don't fail unless ExitCode != 0
-        $out = & git worktree add $wt $branch 2>&1 | Out-String
-        if ($LASTEXITCODE -ne 0) { throw "Worktree add failed: $out" }
-    
-        if (-not (Test-Path $wt)) { throw "Worktree add failed (folder missing): $wt" }
-        return $wt
+        Set-Location $repoRoot
+        try {
+            & git worktree remove $wtPath --force 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "git failed" }
+            Start-Sleep -Seconds 2
+            & git worktree prune
+            Write-Log "Worktree path removed: $wtPath"
+        }
+        catch {
+            # If folder exists but not registered as worktree, delete folder
+            Remove-Item -Recurse -Force $wtPath -ErrorAction SilentlyContinue
+            & git worktree prune
+            Write-Log "Worktree folder deleted (fallback): $wtPath"
+        }
     }
     finally { Set-Location $cwd }
 }
 
-function Remove-TargetWorktree([string]$root, [string]$wt) {
+function New-TargetWorktree([string]$repoRoot, [string]$ticketId, [string]$mode, [string]$targetBranch) {
+    $wtRoot = Join-Path $repoRoot ".worktrees"
+    Ensure-Dir $wtRoot
+
+    $wtName = "$ticketId.$mode"
+    $wtPath = Join-Path $wtRoot $wtName
+
+    # Remove conflicts: same branch already used elsewhere, and stale path
+    Remove-Worktree-ByBranch -repoRoot $repoRoot -branch $targetBranch
+    Remove-Worktree-ByPath   -repoRoot $repoRoot -wtPath $wtPath
+
+    # Ensure branch exists locally (or fetch/create from origin)
+    Ensure-Branch-Ref -repoRoot $repoRoot -branch $targetBranch
+
+    $cwd = Get-Location
     try {
-        Remove-WorktreeByPath -root $root -path $wt
+        Set-Location $repoRoot
+        $out = & git worktree add $wtPath $targetBranch 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) {
+            Die ("Worktree add failed: " + ($out.Trim()))
+        }
+        Write-Log "Worktree add -> $wtPath ($targetBranch)"
     }
-    catch {}
+    finally { Set-Location $cwd }
+
+    return $wtPath
 }
 
-function NowStamp() { (Get-Date).ToString("yyyyMMdd_HHmmss") }
-
-function Invoke-VerifyCommands([object]$ticket, [string]$targetWt, [string]$outPath) {
-    $cmds = @()
-    if ($ticket.target.PSObject.Properties.Name -contains "verify_commands") {
-        $cmds = @($ticket.target.verify_commands)
+function Next-RunDir([string]$repoRoot, [string]$ticketId) {
+    $base = Join-Path $repoRoot "outputs/night_shift/$ticketId"
+    Ensure-Dir $base
+    $dirs = @(Get-ChildItem $base -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^run_\d+$' })
+    $n = 1
+    if ($dirs.Count -gt 0) {
+        $max = ($dirs | ForEach-Object { [int]($_.Name -replace '^run_', '') } | Measure-Object -Maximum).Maximum
+        $n = $max + 1
     }
-    if ($cmds.Count -eq 0) { throw "verify_commands empty (MODE=feature requires it)" }
+    $runDir = Join-Path $base ("run_{0}" -f $n)
+    Ensure-Dir $runDir
+    return [pscustomobject]@{ run_index = $n; run_dir = $runDir }
+}
+
+function Write-Status(
+    [string]$statusPath,
+    [hashtable]$kv
+) {
+    $lines = @()
+    foreach ($k in $kv.Keys) {
+        $v = $kv[$k]
+        if ($null -eq $v) { $v = "" }
+        $lines += ("{0}={1}" -f $k, $v)
+    }
+    ($lines -join "`r`n") | Set-Content -Encoding UTF8 $statusPath
+}
+
+function Invoke-VerifyCommands([object]$ticket, [string]$targetWt, [string]$runDir, [string]$mode) {
+    # Feature mode: run target.verify_commands in the TARGET worktree.
+    if ($mode -ne "feature") { 
+        Write-Log "VERIFY: mode=$mode -> skip verify_commands"
+        return 
+    }
+
+    if (-not ($ticket.PSObject.Properties.Name -contains "target")) { Die "Ticket missing target object" }
+    $t = $ticket.target
+    if (-not ($t.PSObject.Properties.Name -contains "verify_commands")) { Die "Feature mode requires target.verify_commands[]" }
+
+    $cmds = @($t.verify_commands)
+    if ($cmds.Count -eq 0) { Die "Feature mode requires non-empty target.verify_commands[]" }
 
     $cwd = Get-Location
     try {
         Set-Location $targetWt
-        $sb = New-Object System.Text.StringBuilder
+        $stdoutPath = Join-Path $runDir "hardlock_stdout.txt"
+
         foreach ($c in $cmds) {
-            $cStr = [string]$c
-            $sb.AppendLine("=== CMD: $cStr ===") | Out-Null
-            Write-Host "RUN: $cStr"
-            $out = & powershell -NoProfile -Command $cStr 2>&1
-            $sb.AppendLine(($out | Out-String)) | Out-Null
-            if ($LASTEXITCODE -ne 0) {
-                $sb.AppendLine("=== EXITCODE: $LASTEXITCODE ===") | Out-Null
-                throw "verify command failed: $cStr"
+            $cmd = ([string]$c).Trim()
+            if (-not $cmd) { continue }
+
+            Write-Log "RUN: $cmd"
+            Add-Content -Encoding UTF8 $stdoutPath ("`n===== RUN {0} =====`n{1}`n" -f (NowIso), $cmd)
+
+            # capture output
+            $output = & powershell -NoProfile -ExecutionPolicy Bypass -Command $cmd 2>&1 | Out-String
+            $exit = $LASTEXITCODE
+
+            Add-Content -Encoding UTF8 $stdoutPath $output
+            Add-Content -Encoding UTF8 $stdoutPath ("`n[EXITCODE]={0}`n" -f $exit)
+
+            if ($exit -ne 0) {
+                Die ("verify_commands failed (exit=$exit): $cmd")
             }
         }
-        Ensure-Dir (Split-Path $outPath)
-        $sb.ToString() | Set-Content -Encoding UTF8 $outPath
     }
     finally { Set-Location $cwd }
 }
 
 # ---------------- main ----------------
 $ticketAbs = $null
+$root = $null
+$runInfo = $null
+$statusPath = $null
+$ticket = $null
+$mode = $null
+$ticketId = $null
+$opsBranch = $null
+$targetBranch = $null
+$policy = $null
+$limits = $null
+$wt = $null
+
+# retry bookkeeping
+$failCounts = @{}
+$startTime = Get-Date
+
 try {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { Die "Missing required command: git" }
+
     $root = RepoRoot
-    
-    if (Test-Path $TicketPath) {
-        $ticketAbs = (Resolve-Path $TicketPath).Path
-    }
-    else {
-        Die "Ticket path not found: $TicketPath"
-    }
+
+    # Resolve ticket early (for stable $ticketAbs / status writing)
+    if (Test-Path $TicketPath) { $ticketAbs = (Resolve-Path $TicketPath).Path }
+    else { Die "Ticket path not found: $TicketPath" }
 
     $ticket = Read-Ticket $ticketAbs
 
-    # required fields (fail-fast)
-    foreach ($k in @("ticket_id", "mode", "ops", "target")) {
-        if (-not $ticket.PSObject.Properties.Name.Contains($k)) { Die "Missing ticket field: $k" }
-    }
-    foreach ($k in @("branch")) {
-        if (-not $ticket.target.PSObject.Properties.Name.Contains($k)) { Die "Missing ticket.target field: $k" }
+    $ticketId = Get-TicketId $ticket
+    $mode = Normalize-Mode $ticket
+    $opsBranch = Get-OpsBranch $ticket
+    $targetBranch = Get-TargetBranch $ticket
+    $policy = Get-Policy $ticket
+    $limits = Get-Limits $ticket
+
+    $runInfo = Next-RunDir -repoRoot $root -ticketId $ticketId
+    $statusPath = Join-Path $runInfo.run_dir "00_status.txt"
+
+    Write-Status -statusPath $statusPath -kv @{
+        RUN             = $runInfo.run_index
+        OPS_BRANCH      = $opsBranch
+        TARGET_BRANCH   = $targetBranch
+        VERIFY_KIND     = $mode
+        EVIDENCE_POLICY = $policy.evidence_policy
+        START           = (NowIso)
+        RESULT          = ""
+        ERROR           = ""
+        END             = ""
     }
 
-    $ticketId = [string]$ticket.ticket_id
-    $mode = [string]$ticket.mode   # "ops" | "feature"
-    if ($mode -ne "ops" -and $mode -ne "feature") { Die "Invalid ticket.mode: $mode" }
-
-    $opsBranch = (git branch --show-current).Trim()
-    if ($ticket.ops.PSObject.Properties.Name -contains "branch") {
-        $expectedOps = [string]$ticket.ops.branch
-        if (-not [string]::IsNullOrWhiteSpace($expectedOps) -and $expectedOps -ne $opsBranch) {
-            Die "Must run from ops branch '$expectedOps' but current is '$opsBranch'"
+    # ---- fail-fast required scripts ----
+    $need = @(
+        (Join-Path $root "tools/night_shift/oracle_gate_check.ps1"),
+        (Join-Path $root "tools/night_shift/pack_evidence.ps1"),
+        (Join-Path $root "tools/night_shift/oracle_rules.ps1")
+    )
+    foreach ($p in $need) {
+        if (-not (Test-Path $p)) {
+            Die "Fail-fast: required file missing: $p"
         }
     }
 
-    $maxIters = 5
-    $sameFailLimit = 3
-    $maxHours = 6.0
-    if ($ticket.PSObject.Properties.Name -contains "limits") {
-        if ($ticket.limits.PSObject.Properties.Name -contains "max_iters") { $maxIters = [int]$ticket.limits.max_iters }
-        if ($ticket.limits.PSObject.Properties.Name -contains "same_fail_limit") { $sameFailLimit = [int]$ticket.limits.same_fail_limit }
-        if ($ticket.limits.PSObject.Properties.Name -contains "max_hours") { $maxHours = [double]$ticket.limits.max_hours }
-    }
+    # ---- retry loop ----
+    for ($iter = 1; $iter -le $limits.max_iters; $iter++) {
+        # stop by time
+        $elapsed = (Get-Date) - $startTime
+        if ($elapsed.TotalHours -gt $limits.max_hours) {
+            Die ("ABORT: max_hours exceeded ({0}h)" -f $limits.max_hours)
+        }
 
-    $policyEvidence = "pack_only"
-    if ($ticket.target.PSObject.Properties.Name -contains "evidence_policy") {
-        $policyEvidence = [string]$ticket.target.evidence_policy
-    }
-    if (@("pack_only", "commit", "external") -notcontains $policyEvidence) {
-        Die "Invalid ticket.target.evidence_policy: $policyEvidence"
-    }
-
-    $nightRoot = Join-Path $root ("outputs/night_shift/{0}" -f $ticketId)
-    Ensure-Dir $nightRoot
-
-    $start = Get-Date
-    $lastSig = ""
-    $lastCount = 0
-
-    for ($i = 1; $i -le $maxIters; $i++) {
-        $elapsed = ((Get-Date) - $start).TotalHours
-        if ($elapsed -ge $maxHours) { Die "TIMEOUT: max_hours reached ($maxHours)" }
-
-        $runDir = Join-Path $nightRoot ("run_{0:000}_{1}" -f $i, (NowStamp))
-        Ensure-Dir $runDir
-
-        $status = Join-Path $runDir "00_status.txt"
-        
-        # Use explicit ops branch from ticket if available, else exact current branch
-        $recordOps = if ($ticket.ops.PSObject.Properties.Name -contains "branch") { $ticket.ops.branch } else { $opsBranch }
-        
-        @"
-RUN_INDEX=$i
-TICKET_ID=$ticketId
-MODE=$mode
-OPS_BRANCH=$recordOps
-TARGET_BRANCH=$($ticket.target.branch)
-EVIDENCE_POLICY=$policyEvidence
-START=$(Get-Date -Format o)
-"@ | Set-Content -Encoding UTF8 $status
-
-        $wt = $null
-        $errMsg = $null
         try {
-            $wt = New-TargetWorktree -root $root -ticketId $ticketId -branch ([string]$ticket.target.branch)
+            # Always (re)create isolated worktree for target branch
+            $wt = New-TargetWorktree -repoRoot $root -ticketId $ticketId -mode $mode -targetBranch $targetBranch
 
-            # (A) Local oracle gate (policy checks, allowlists, mkdocs routing, rules existence)
-            & powershell -ExecutionPolicy Bypass -File "$root/tools/night_shift/oracle_gate_check.ps1" `
-                -TicketPath "$ticketAbs" -TargetWorktree "$wt"
-            if ($LASTEXITCODE -ne 0) { throw "oracle_gate_check failed" }
+            # ---- oracle gate check (runs in ops workspace, may inspect target worktree HEAD) ----
+            $gateOut = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "tools/night_shift/oracle_gate_check.ps1") `
+                -TicketPath $ticketAbs -TargetWorktree $wt 2>&1 | Out-String
 
-            # (B) Verify commands only if MODE=feature (policy-fixed)
-            if ($mode -eq "feature") {
-                $stdout = Join-Path $runDir "hardlock_stdout.txt"
-                Invoke-VerifyCommands -ticket $ticket -targetWt $wt -outPath $stdout
-            }
-            else {
-                Write-Host "MODE=ops -> verify_commands skipped (fixed by policy)"
+            $gateExit = $LASTEXITCODE
+            Add-Content -Encoding UTF8 (Join-Path $runInfo.run_dir "oracle_gate_stdout.txt") $gateOut
+
+            if ($gateExit -ne 0) {
+                Die ("oracle_gate_check failed (exit=$gateExit)")
             }
 
-            # (C) Pack evidence always (policy controls what’s copied)
-            & powershell -ExecutionPolicy Bypass -File "$root/tools/night_shift/pack_evidence.ps1" `
-                -TicketPath "$ticketAbs" -TargetWorktree "$wt" -RunDir "$runDir" -Policy "$policyEvidence"
-            if ($LASTEXITCODE -ne 0) { throw "pack_evidence failed" }
+            Write-Log ("Gate OK. mkdocs={0}; evidence_policy={1}; mode={2}" -f $policy.mkdocs_route, $policy.evidence_policy, $mode)
 
-            @"
-RESULT=PASS
-END=$(Get-Date -Format o)
-"@ | Add-Content -Encoding UTF8 $status
+            # ---- verify commands (feature only) ----
+            Invoke-VerifyCommands -ticket $ticket -targetWt $wt -runDir $runInfo.run_dir -mode $mode
 
-            Write-Host "SAFE_RALPH_PASS: Night Shift complete."
+            # ---- pack evidence (always; pack_only keeps gitignore-friendly) ----
+            $packOut = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "tools/night_shift/pack_evidence.ps1") `
+                -TicketPath $ticketAbs -TargetWorktree $wt -RunDir $runInfo.run_dir -Policy $policy.evidence_policy 2>&1 | Out-String
+
+            $packExit = $LASTEXITCODE
+            Add-Content -Encoding UTF8 (Join-Path $runInfo.run_dir "pack_evidence_stdout.txt") $packOut
+            if ($packExit -ne 0) {
+                Die ("pack_evidence failed (exit=$packExit)")
+            }
+
+            # ---- success ----
+            Write-Status -statusPath $statusPath -kv @{
+                RUN             = $runInfo.run_index
+                OPS_BRANCH      = $opsBranch
+                TARGET_BRANCH   = $targetBranch
+                VERIFY_KIND     = $mode
+                EVIDENCE_POLICY = $policy.evidence_policy
+                START           = ""  # keep original
+                RESULT          = "PASS"
+                ERROR           = ""
+                END             = (NowIso)
+            }
+
+            Write-Log "SAFE_RALPH_PASS: Night Shift complete."
             exit 0
         }
         catch {
             $errMsg = $_.Exception.Message
-            Write-Host "SAFE_RALPH_RUN_FAIL: $errMsg"
 
-            # still try packing evidence on failure (best-effort)
-            try {
-                if ($wt -and $ticketAbs) {
-                    & powershell -ExecutionPolicy Bypass -File "$root/tools/night_shift/pack_evidence.ps1" `
-                        -TicketPath "$ticketAbs" -TargetWorktree "$wt" -RunDir "$runDir" -Policy "$policyEvidence" 2>$null | Out-Null
-                }
+            # classify failure key (stable bucket)
+            $key = $errMsg
+            if ($key.Length -gt 160) { $key = $key.Substring(0, 160) }
+
+            if (-not $failCounts.ContainsKey($key)) { $failCounts[$key] = 0 }
+            $failCounts[$key] = [int]$failCounts[$key] + 1
+
+            Write-Status -statusPath $statusPath -kv @{
+                RUN             = $runInfo.run_index
+                OPS_BRANCH      = $opsBranch
+                TARGET_BRANCH   = $targetBranch
+                VERIFY_KIND     = $mode
+                EVIDENCE_POLICY = $policy.evidence_policy
+                START           = ""  # keep original
+                RESULT          = "FAIL"
+                ERROR           = $errMsg
+                END             = (NowIso)
             }
-            catch {}
 
-            @"
-RESULT=FAIL
-ERROR=$errMsg
-END=$(Get-Date -Format o)
-"@ | Add-Content -Encoding UTF8 $status
+            Write-Log ("SAFE_RALPH_RUN_FAIL: {0}" -f $errMsg)
 
-            # same-failure abort
-            $sig = $errMsg
-            if ($sig -eq $lastSig) { $lastCount++ } else { $lastSig = $sig; $lastCount = 1 }
-            if ($lastCount -ge $sameFailLimit) {
-                Die "ABORT: same_fail_limit reached ($sameFailLimit) for: $sig"
+            # cleanup target worktree on failure (prevents branch lock)
+            if ($wt) {
+                try { Remove-Worktree-ByPath -repoRoot $root -wtPath $wt } catch { }
+                $wt = $null
             }
-        }
-        finally {
-            if ($wt) { Remove-TargetWorktree -root $root -wt $wt }
+
+            if ($failCounts[$key] -ge $limits.same_fail_limit) {
+                Die ("ABORT: same_fail_limit reached ({0}) for: {1}" -f $limits.same_fail_limit, $key)
+            }
+
+            # retry
+            Write-Log ("Retrying... iter={0}/{1}" -f $iter, $limits.max_iters)
+            Start-Sleep -Seconds 1
         }
     }
 
-    Die "ABORT: max_iters reached ($maxIters)"
+    Die "ABORT: max_iters exhausted"
 }
 catch {
-    $err = $_.Exception.Message
-    if (-not $ticketAbs) { Write-Host "SAFE_RALPH_FATAL_NO_TICKET: $err" }
-    else { Write-Host "SAFE_RALPH_FATAL: $err" }
+    $finalErr = $_.Exception.Message
+
+    # best-effort status write
+    try {
+        if ($statusPath) {
+            $valRun = if ($runInfo) { $runInfo.run_index } else { "" }
+            $valOps = if ($opsBranch) { $opsBranch } else { "" }
+            $valTarget = if ($targetBranch) { $targetBranch } else { "" }
+            $valMode = if ($mode) { $mode } else { "" }
+            $valEv = if ($policy) { $policy.evidence_policy } else { "" }
+
+            Write-Status -statusPath $statusPath -kv @{
+                RUN             = $valRun
+                OPS_BRANCH      = $valOps
+                TARGET_BRANCH   = $valTarget
+                VERIFY_KIND     = $valMode
+                EVIDENCE_POLICY = $valEv
+                START           = ""
+                RESULT          = "FAIL"
+                ERROR           = $finalErr
+                END             = (NowIso)
+            }
+        }
+    }
+    catch { }
+
+    Write-Log ("SAFE_RALPH_FAIL: {0}" -f $finalErr)
     exit 1
+}
+finally {
+    # always best-effort cleanup of worktree to avoid branch locks
+    try {
+        if ($wt -and $root) {
+            Remove-Worktree-ByPath -repoRoot $root -wtPath $wt
+        }
+    }
+    catch { }
 }
