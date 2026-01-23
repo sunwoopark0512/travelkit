@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>긴 대화를 위한 자동 목차 설정</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', system-ui, sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .panel {
+        width: min(480px, 90vw);
+        background: rgba(15, 23, 42, 0.95);
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 25px 50px rgba(2, 6, 23, 0.65);
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 1.8rem;
+      }
+      p {
+        margin: 0 0 16px;
+        color: rgba(248, 250, 252, 0.7);
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+      }
+      select,
+      input {
+        margin-top: 6px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(15, 23, 42, 0.8);
+        color: #f8fafc;
+        font-size: 1rem;
+      }
+      button {
+        margin-top: 16px;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #22d3ee, #6366f1);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+        color: rgba(248, 250, 252, 0.7);
+      }
+      .note {
+        background: rgba(15, 23, 42, 0.6);
+        padding: 12px;
+        border-radius: 12px;
+        margin-top: 12px;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel">
+      <h1>자동 목차 설정</h1>
+      <p>패널 동작과 하이라이트 색상을 원하는 대로 조정하세요.</p>
+      <form id="settings-form">
+        <label>
+          패널 위치
+          <select name="panelSide">
+            <option value="right">오른쪽</option>
+            <option value="left">왼쪽</option>
+          </select>
+        </label>
+        <label>
+          긴 스레드에서 자동으로 패널 열기 (메시지 수)
+          <input type="number" name="autoOpenThreshold" min="3" max="100" step="1" />
+        </label>
+        <label>
+          하이라이트 색상
+          <input type="color" name="highlightColor" />
+        </label>
+        <div class="info-row">
+          <span>키보드 단축키</span>
+          <strong>Alt + T</strong>
+        </div>
+        <button type="submit">저장</button>
+        <button type="button" id="export-toc">목차 복사</button>
+      </form>
+      <div id="status"></div>
+      <div class="note">
+        옵션은 Chrome/Edge의 chrome.storage.sync에 안전하게 저장됩니다.
+      </div>
+    </div>
+    <script src="options.js"></script>
+  </body>
+</html>

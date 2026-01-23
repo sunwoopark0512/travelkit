@@ -1,0 +1,28 @@
+{
+  "name": "긴 대화를 위한 자동 목차",
+  "description": "긴 채팅 스레드에서 눈에 띄는 제목 블록을 모아 빠르게 이동할 수 있는 자동 인덱스를 생성합니다.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content_script.js"],
+      "css": ["content_style.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "toggle-panel": {
+      "suggested_key": {
+        "default": "Alt+T"
+      },
+      "description": "토글 자동 목차 패널"
+    }
+  }
+}
