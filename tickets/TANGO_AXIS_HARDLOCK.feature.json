@@ -9,8 +9,8 @@
                    "mkdocs_route":  "auto",
                    "evidence_policy":  "pack_only",
                    "verify_commands":  [
-                                           "python scripts/local_content_batch.py --series tango_axis --variants 3",
-                                           "python scripts/export_cards.py"
+                                           "python scripts/export_cards.py",
+                                           "python scripts/local_content_batch.py --series tango_axis --variants 3"
                                        ]
                },
     "limits":  {
