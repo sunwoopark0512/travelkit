@@ -1,5 +1,5 @@
 ﻿'use client';
-
+import type * as GeoJSON from 'geojson';
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -127,7 +127,7 @@ export default function Home() {
         });
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (map.getSource(sourceId) as mapboxgl.GeoJSONSource).setData(feature as GeoJSON.FeatureCollection);
+        (map.getSource(sourceId) as mapboxgl.GeoJSONSource).setData(feature as GeoJSON.GeoJSON);
       }
 
       // bbox: [minLon, minLat, maxLon, maxLat]
@@ -203,7 +203,7 @@ export default function Home() {
           {showHistory ? (
             <div className="max-h-60 overflow-y-auto space-y-3">
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {history.slice(0, 5).map((h: unknown, i: number) => (
+              {history.slice(0, 5).map((h: any, i: number) => (
                 <div key={i} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
                   <div>
                     <div className="font-bold text-slate-700">{(h.distance / 1000).toFixed(1)}km</div>
@@ -275,3 +275,4 @@ export default function Home() {
     </main>
   );
 }
+
