@@ -2,6 +2,7 @@
   "pages": [
     "pages/login/login",
     "pages/home/home",
+    "pages/insights/insights",
     "pages/trip-list/trip-list",
     "pages/trip-create/trip-create",
     "pages/cooperative-trip-list/cooperative-trip-list",

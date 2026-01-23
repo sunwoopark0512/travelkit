@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.check.mapper.BrandMentionMapper">
+    <resultMap id="BaseResultMap" type="com.example.check.pojo.BrandMention">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="job_id" property="jobId" jdbcType="INTEGER"/>
+        <result column="source_name" property="sourceName" jdbcType="VARCHAR"/>
+        <result column="url" property="url" jdbcType="VARCHAR"/>
+        <result column="snippet" property="snippet" jdbcType="VARCHAR"/>
+        <result column="sentiment" property="sentiment" jdbcType="VARCHAR"/>
+        <result column="mention_date" property="mentionDate" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.example.check.pojo.BrandMention" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO brand_mentions (job_id, source_name, url, snippet, sentiment, mention_date)
+        VALUES (#{jobId}, #{sourceName}, #{url}, #{snippet}, #{sentiment}, #{mentionDate})
+    </insert>
+
+    <select id="selectByJobId" resultMap="BaseResultMap">
+        SELECT * FROM brand_mentions WHERE job_id = #{jobId}
+    </select>
+    
+    <delete id="deleteByJobId">
+        DELETE FROM brand_mentions WHERE job_id = #{jobId}
+    </delete>
+</mapper>

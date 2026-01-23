@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.check.mapper.KeywordGapMapper">
+    <resultMap id="BaseResultMap" type="com.example.check.pojo.KeywordGap">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="job_id" property="jobId" jdbcType="INTEGER"/>
+        <result column="keyword" property="keyword" jdbcType="VARCHAR"/>
+        <result column="competitor_volume" property="competitorVolume" jdbcType="INTEGER"/>
+        <result column="our_volume" property="ourVolume" jdbcType="INTEGER"/>
+        <result column="difficulty" property="difficulty" jdbcType="INTEGER"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.example.check.pojo.KeywordGap" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO keyword_gaps (job_id, keyword, competitor_volume, our_volume, difficulty)
+        VALUES (#{jobId}, #{keyword}, #{competitorVolume}, #{ourVolume}, #{difficulty})
+    </insert>
+
+    <select id="selectByJobId" resultMap="BaseResultMap">
+        SELECT * FROM keyword_gaps WHERE job_id = #{jobId}
+    </select>
+
+    <delete id="deleteByJobId">
+        DELETE FROM keyword_gaps WHERE job_id = #{jobId}
+    </delete>
+</mapper>

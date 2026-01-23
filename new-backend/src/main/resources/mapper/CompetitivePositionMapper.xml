@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.check.mapper.CompetitivePositionMapper">
+    <resultMap id="BaseResultMap" type="com.example.check.pojo.CompetitivePosition">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="job_id" property="jobId" jdbcType="INTEGER"/>
+        <result column="competitor_name" property="competitorName" jdbcType="VARCHAR"/>
+        <result column="market_share" property="marketShare" jdbcType="DECIMAL"/>
+        <result column="growth_rate" property="growthRate" jdbcType="DECIMAL"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.example.check.pojo.CompetitivePosition" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO competitive_positions (job_id, competitor_name, market_share, growth_rate)
+        VALUES (#{jobId}, #{competitorName}, #{marketShare}, #{growthRate})
+    </insert>
+
+    <select id="selectByJobId" resultMap="BaseResultMap">
+        SELECT * FROM competitive_positions WHERE job_id = #{jobId}
+    </select>
+
+    <delete id="deleteByJobId">
+        DELETE FROM competitive_positions WHERE job_id = #{jobId}
+    </delete>
+</mapper>

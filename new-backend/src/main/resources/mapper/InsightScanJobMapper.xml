@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.check.mapper.InsightScanJobMapper">
+    <resultMap id="BaseResultMap" type="com.example.check.pojo.InsightScanJob">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="user_id" property="userId" jdbcType="INTEGER"/>
+        <result column="target_url" property="targetUrl" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="overall_score" property="overallScore" jdbcType="INTEGER"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    
+    <sql id="BaseColumnList">
+        id, user_id, target_url, status, overall_score, created_at, updated_at
+    </sql>
+
+    <insert id="insert" parameterType="com.example.check.pojo.InsightScanJob" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO insight_scan_jobs (user_id, target_url, status, created_at, updated_at)
+        VALUES (#{userId}, #{targetUrl}, #{status}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumnList"/> FROM insight_scan_jobs WHERE id = #{id}
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumnList"/> FROM insight_scan_jobs WHERE user_id = #{userId} ORDER BY created_at DESC
+    </select>
+    
+    <select id="selectPendingJobs" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumnList"/> FROM insight_scan_jobs WHERE status = 0
+    </select>
+
+    <update id="update" parameterType="com.example.check.pojo.InsightScanJob">
+        UPDATE insight_scan_jobs
+        SET status = #{status},
+            overall_score = #{overallScore},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+</mapper>

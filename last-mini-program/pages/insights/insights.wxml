@@ -1,0 +1,67 @@
+<view class="container">
+  <view class="header">
+    <text class="title">竞争对手 X-Ray</text>
+    <text class="subtitle">输入竞品 URL，分析优劣势</text>
+  </view>
+
+  <!-- Input Section -->
+  <view class="scan-card">
+    <input class="url-input" placeholder="输入竞品网址 (如 competitor.com)" bindinput="onUrlInput" value="{{targetUrl}}" />
+    <button class="btn-primary" bindtap="startScan" loading="{{loading}}">开始扫描</button>
+  </view>
+
+  <!-- History List -->
+  <view class="section-title" wx:if="{{jobs.length > 0}}">扫描记录</view>
+  <view class="job-list">
+    <view class="job-card" wx:for="{{jobs}}" wx:key="id" bindtap="viewDashboard" data-id="{{item.id}}">
+      <view class="job-info">
+        <text class="job-url">{{item.targetUrl}}</text>
+        <text class="job-date">{{item.createdAt}}</text>
+      </view>
+      <view class="job-status">
+        <text class="status-badge {{item.status == 2 ? 'success' : 'pending'}}">
+          {{item.status == 2 ? '完成 (' + item.overallScore + '分)' : '扫描中...'}}
+        </text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Dashboard Modal (Simple Overlay) -->
+  <view class="dashboard-overlay" wx:if="{{showDashboard && dashboard}}">
+    <view class="dashboard-content">
+      <view class="dash-header">
+        <text class="dash-title">分析报告: {{dashboard.job.targetUrl}}</text>
+        <button size="mini" bindtap="closeDashboard">关闭</button>
+      </view>
+      
+      <scroll-view scroll-y class="dash-scroll">
+        <!-- Sentiment -->
+        <view class="dash-section">
+          <text class="sec-head">情感分析 (Sentiment)</text>
+          <view wx:for="{{dashboard.sentiments}}" wx:key="id" class="data-row">
+            <text>{{item.platform}}</text>
+            <progress percent="{{item.positiveRatio}}" stroke-width="6" color="#10B981" />
+            <text class="minor-text">Pos: {{item.positiveRatio}}%</text>
+          </view>
+        </view>
+
+        <!-- Positioning -->
+        <view class="dash-section">
+          <text class="sec-head">市场定位 (Positioning)</text>
+          <view wx:for="{{dashboard.positions}}" wx:key="id" class="data-row">
+            <text>{{item.competitorName}}</text>
+            <text>Share: {{item.marketShare}}% | Growth: {{item.growthRate}}%</text>
+          </view>
+        </view>
+
+        <!-- Keywords -->
+        <view class="dash-section">
+          <text class="sec-head">关键词缺口 (Keywords)</text>
+          <view wx:for="{{dashboard.keywords}}" wx:key="id" class="keyword-tag">
+             {{item.keyword}} (Diff: {{item.difficulty}})
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>
