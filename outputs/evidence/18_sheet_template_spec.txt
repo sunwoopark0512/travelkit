@@ -1,0 +1,12 @@
+﻿# Sheet Template Spec (Fixed)
+Tabs:
+- INBOX
+- PROCESS
+- OUTPUT
+- LOGS
+
+Each tab header (Row 1):
+timestamp | idem_key | title | body
+
+Row model:
+[timestamp(UTC ISO8601), idem_key(sha1 or provided), title, body(multiline allowed)]

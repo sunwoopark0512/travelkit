@@ -1,4 +1,4 @@
-###################
+﻿###################
 # TravelKit Ignore
 ###################
 
@@ -22,3 +22,31 @@ build/
 bin/
 target/
 outputs/
+
+# secrets
+
+# secrets
+
+# secrets
+credentials.json
+
+
+
+
+# evidence allowlist (commit only outputs/evidence, keep other outputs ignored)
+outputs/
+outputs/**
+
+
+# evidence allowlist (commit only outputs/evidence, keep other outputs ignored)
+outputs/
+outputs/**
+!outputs/
+!outputs/evidence/
+!outputs/evidence/**
+
+# local temp (do not commit)
+apps-script-samples/
+temp_gsheetlogger/
+temp_repo/
+
