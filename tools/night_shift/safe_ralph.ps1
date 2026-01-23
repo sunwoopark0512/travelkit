@@ -1,4 +1,4 @@
-﻿# =========================
+# =========================
 # FILE: tools/night_shift/safe_ralph.ps1
 # =========================
 <#
@@ -12,7 +12,7 @@ Safe Ralph Night Shift Runner (SSoT-driven)
   - oracle_gate_check (local policy gate) before verify/evidence
   - pack_evidence after verify attempt (success/fail)
 - Worktree collision auto-removal (by path and by branch)
-- Fail-fast if required tooling missing (oracle_gate_check enforces oracle_rules presence)
+- Fail-fast if required tooling missing
 #>
 
 param(
@@ -95,7 +95,7 @@ function New-TargetWorktree([string]$root, [string]$ticketId, [string]$branch) {
         Write-Host "Worktree add -> $wt ($branch)"
         # Git often writes to stderr for progress. We capture it but don't fail unless ExitCode != 0
         $out = & git worktree add $wt $branch 2>&1 | Out-String
-        if ($LASTEXITCODE -ne 0) { throw "Worktree add failed:`n$out" }
+        if ($LASTEXITCODE -ne 0) { throw "Worktree add failed: $out" }
     
         if (-not (Test-Path $wt)) { throw "Worktree add failed (folder missing): $wt" }
         return $wt
@@ -141,10 +141,18 @@ function Invoke-VerifyCommands([object]$ticket, [string]$targetWt, [string]$outP
 }
 
 # ---------------- main ----------------
+$ticketAbs = $null
 try {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { Die "Missing required command: git" }
     $root = RepoRoot
-    $ticketAbs = (Resolve-Path $TicketPath).Path
+    
+    if (Test-Path $TicketPath) {
+        $ticketAbs = (Resolve-Path $TicketPath).Path
+    }
+    else {
+        Die "Ticket path not found: $TicketPath"
+    }
+
     $ticket = Read-Ticket $ticketAbs
 
     # required fields (fail-fast)
@@ -199,11 +207,15 @@ try {
         Ensure-Dir $runDir
 
         $status = Join-Path $runDir "00_status.txt"
+        
+        # Use explicit ops branch from ticket if available, else exact current branch
+        $recordOps = if ($ticket.ops.PSObject.Properties.Name -contains "branch") { $ticket.ops.branch } else { $opsBranch }
+        
         @"
 RUN_INDEX=$i
 TICKET_ID=$ticketId
 MODE=$mode
-OPS_BRANCH=$opsBranch
+OPS_BRANCH=$recordOps
 TARGET_BRANCH=$($ticket.target.branch)
 EVIDENCE_POLICY=$policyEvidence
 START=$(Get-Date -Format o)
@@ -247,7 +259,7 @@ END=$(Get-Date -Format o)
 
             # still try packing evidence on failure (best-effort)
             try {
-                if ($wt) {
+                if ($wt -and $ticketAbs) {
                     & powershell -ExecutionPolicy Bypass -File "$root/tools/night_shift/pack_evidence.ps1" `
                         -TicketPath "$ticketAbs" -TargetWorktree "$wt" -RunDir "$runDir" -Policy "$policyEvidence" 2>$null | Out-Null
                 }
@@ -275,5 +287,8 @@ END=$(Get-Date -Format o)
     Die "ABORT: max_iters reached ($maxIters)"
 }
 catch {
-    Die ("Unhandled error: " + $_.Exception.Message)
+    $err = $_.Exception.Message
+    if (-not $ticketAbs) { Write-Host "SAFE_RALPH_FATAL_NO_TICKET: $err" }
+    else { Write-Host "SAFE_RALPH_FATAL: $err" }
+    exit 1
 }
