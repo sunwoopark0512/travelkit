@@ -772,3 +772,24 @@ Travelkit/
 ---
 
 *문제가 있으면 "자주 묻는 질문" 섹션을 확인하거나 로그 정보를 검토하세요.*
+
+##  AI 웹사이트 빌더 (신규)
+
+사용자의 아이디어를 바탕으로 랜딩 페이지를 10초 만에 생성하고 배포하는 기능이 추가되었습니다.
+
+### 주요 기능
+1. **아이디어 입력**: 텍스트로 웹사이트 아이디어 입력 (예: "건강식 배달 서비스")
+2. **AI 자동 생성**: Spring Boot 백엔드와 모의 LLM이 HTML/CSS 구조 생성
+3. **실시간 미리보기**: 미니프로그램 내에서 생성된 코드 렌더링 확인
+4. **원클릭 배포**: Vercel/Netlify 모의 배포를 통해 퍼블릭 링크 생성
+
+### 기술 스택
+- **Backend**: Spring Boot, MyBatis (새로운 \i_builder_previews\ 테이블)
+- **Frontend**: WeChat Mini-Program (Native)
+- **AI Engine**: Mock Generator (실제 LLM 연동 가능하도록 인터페이스 분리됨)
+
+### 실행 방법
+1. 백엔드 실행: \
+ew-backend\ 폴더에서 \mvn spring-boot:run\
+2. 미니프로그램: WeChat DevTools에서 \last-mini-program\ 열기
+3. 메뉴 이동: 하단 탭 바가 아닌 별도 페이지(\pages/builder/builder\)로 접근하거나 \pp.json\에서 entry page로 설정

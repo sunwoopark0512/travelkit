@@ -452,3 +452,24 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-01-07 11:49:22
+-- AI Builder Previews Table
+DROP TABLE IF EXISTS i_builder_previews;
+CREATE TABLE i_builder_previews (
+  id int NOT NULL AUTO_INCREMENT,
+  user_id int NOT NULL COMMENT '用户ID',
+  	itle varchar(255) DEFAULT NULL COMMENT '站点标题',
+  idea text COMMENT '用户输入的想法',
+  	heme varchar(50) DEFAULT NULL COMMENT '主题风格',
+  	one varchar(50) DEFAULT NULL COMMENT '语气',
+  prompt text COMMENT '生成的提示词',
+  html mediumtext COMMENT '生成的HTML',
+  css mediumtext COMMENT '生成的CSS',
+  status int DEFAULT '0' COMMENT '0:Pending, 1:Ready, 2:Deployed, -1:Failed',
+  deployment_url varchar(500) DEFAULT NULL COMMENT '部署链接',
+  platform varchar(50) DEFAULT NULL COMMENT '部署平台',
+  generation_time_ms bigint DEFAULT NULL COMMENT '生成耗时',
+  error_message text COMMENT '错误信息',
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='AI生成站点预览表';

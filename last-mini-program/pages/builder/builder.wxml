@@ -1,0 +1,73 @@
+<view class="container">
+  <view class="header">
+    <text class="title">AI 网站生成器</text>
+    <text class="subtitle">输入想法，10秒生成落地页</text>
+  </view>
+
+  <!-- Input Step -->
+  <view class="step-card" wx:if="{{step === 1}}">
+    <view class="form-group">
+      <text class="label">你的想法</text>
+      <textarea 
+        class="input-area" 
+        placeholder="例如：一个为忙碌父母准备的健康膳食配送服务..." 
+        bindinput="onIdeaInput"
+        value="{{idea}}"
+      ></textarea>
+    </view>
+    
+    <view class="form-group">
+      <text class="label">风格主题</text>
+      <picker bindchange="onThemeChange" value="{{themeIndex}}" range="{{themes}}">
+        <view class="picker">
+          当前选择：{{themes[themeIndex]}}
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-group">
+      <text class="label">语气</text>
+      <picker bindchange="onToneChange" value="{{toneIndex}}" range="{{tones}}">
+        <view class="picker">
+          当前选择：{{tones[toneIndex]}}
+        </view>
+      </picker>
+    </view>
+
+    <button class="btn-primary" bindtap="generateSite" loading="{{loading}}">开始生成</button>
+  </view>
+
+  <!-- Preview Step -->
+  <view class="step-card" wx:if="{{step === 2}}">
+    <view class="preview-header">
+      <text class="status-badge">生成成功</text>
+      <text class="time-text">耗时: {{previewData.generationTimeMs}}ms</text>
+    </view>
+    
+    <view class="preview-box">
+      <text class="preview-hint">预览模式 (HTML代码已生成)</text>
+      <view class="code-block">
+        {{previewData.html}}
+      </view>
+    </view>
+
+    <view class="actions">
+      <button class="btn-secondary" bindtap="reset">重新生成</button>
+      <button class="btn-primary" bindtap="deploySite" loading="{{deploying}}">一键部署</button>
+    </view>
+  </view>
+
+  <!-- Deploy Success Step -->
+  <view class="step-card" wx:if="{{step === 3}}">
+    <icon type="success" size="64" color="#10B981"/>
+    <text class="success-title">部署完成！</text>
+    <text class="success-desc">你的网站已上线，访问链接如下：</text>
+    
+    <view class="link-box">
+      <text class="link-text">{{previewData.deploymentUrl}}</text>
+      <button class="btn-copy" bindtap="copyLink">复制链接</button>
+    </view>
+
+    <button class="btn-primary" bindtap="reset" style="margin-top:40rpx">创建新网站</button>
+  </view>
+</view>

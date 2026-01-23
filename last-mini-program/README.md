@@ -177,3 +177,16 @@ mvn spring-boot:run
 3. 修改 `utils/api.js` 中的 `BASE_URL` 为生产环境地址
 4. 使用微信开发者工具上传代码并提交审核
 
+
+##  AI Builder API
+WeChat Mini-program 내에서 AI 빌더 기능을 사용하기 위한 유틸리티 명세입니다.
+
+### \utils/builderApi.js\
+- \createIdea(userId, data)\: 아이디어, 테마, 톤을 전송하여 생성을 요청합니다.
+- \getPreview(id)\: 생성된 미리보기 데이터(HTML/CSS)를 조회합니다.
+- \deploy(id, platform)\: 특정 플랫폼(vercel 등)으로 배포를 요청합니다.
+
+### 페이지 구조 (\pages/builder/\)
+- Input Step: 아이디어 입력 및 옵션 선택
+- Preview Step: 생성 결과(Code/Visual) 확인
+- Success Step: 배포 완료 링크 제공
