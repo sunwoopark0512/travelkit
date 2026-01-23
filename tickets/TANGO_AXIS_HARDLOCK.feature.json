@@ -1,5 +1,5 @@
 ﻿{
-    "ticket_id":  "TANGO_AXIS_HARDLOCK.feature",
+    "ticket_id":  "TANGO_AXIS_HARDLOCK",
     "mode":  "feature",
     "ops":  {
                 "branch":  "ops/safe-ralph-night-shift"
