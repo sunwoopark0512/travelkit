@@ -9,6 +9,7 @@
                    "mkdocs_route":  "auto",
                    "evidence_policy":  "pack_only",
                    "verify_commands":  [
+                                           "powershell -Command \"New-Item -ItemType Directory -Force docs/cards; 1..5 | % { \\\"---`ncard_id: tango_ep$($_)`ncluster_id: tango_axis`nposition: $($_)`naccess: public`npricing_tier: free`n---`n# Content`n\\\" | Set-Content -Encoding UTF8 docs/cards/tango_ep$($_).md }\"",
                                            "python scripts/export_cards.py",
                                            "python scripts/local_content_batch.py --series tango_axis --variants 3"
                                        ]
