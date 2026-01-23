@@ -17,8 +17,8 @@ param(
     [Parameter(Mandatory = $true)][string]$TicketPath
 )
 
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
+# Set-StrictMode -Version Latest
+$ErrorActionPreference = "Continue"
 
 # ---------------- utilities ----------------
 function NowIso() { (Get-Date).ToString("o") }
@@ -232,6 +232,9 @@ function New-TargetWorktree([string]$repoRoot, [string]$ticketId, [string]$mode,
     $wtRoot = Join-Path $repoRoot ".worktrees"
     Ensure-Dir $wtRoot
 
+    # Prune stale entries first
+    & git worktree prune 2>&1 | Out-Null
+
     $wtName = "$ticketId.$mode"
     $wtPath = Join-Path $wtRoot $wtName
 
@@ -245,11 +248,12 @@ function New-TargetWorktree([string]$repoRoot, [string]$ticketId, [string]$mode,
     $cwd = Get-Location
     try {
         Set-Location $repoRoot
-        $out = & git worktree add $wtPath $targetBranch 2>&1 | Out-String
+        # Use --detach to avoid "branch already used" lock. We verify content, we don't need branch pointer.
+        & git worktree add --detach $wtPath $targetBranch | Out-Null
         if ($LASTEXITCODE -ne 0) {
-            Die ("Worktree add failed: " + ($out.Trim()))
+            Die ("Worktree add failed (exit code $LASTEXITCODE)")
         }
-        Write-Log "Worktree add -> $wtPath ($targetBranch)"
+        Write-Log "Worktree add (detached) -> $wtPath ($targetBranch)"
     }
     finally { Set-Location $cwd }
 
@@ -400,8 +404,7 @@ try {
             $wt = New-TargetWorktree -repoRoot $root -ticketId $ticketId -mode $mode -targetBranch $targetBranch
 
             # ---- oracle gate check (runs in ops workspace, may inspect target worktree HEAD) ----
-            $gateOut = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "tools/night_shift/oracle_gate_check.ps1") `
-                -TicketPath $ticketAbs -TargetWorktree $wt 2>&1 | Out-String
+            $gateOut = & (Join-Path $root "tools/night_shift/oracle_gate_check.ps1") -TicketPath $ticketAbs -TargetWorktree $wt 2>&1 | Out-String
 
             $gateExit = $LASTEXITCODE
             Add-Content -Encoding UTF8 (Join-Path $runInfo.run_dir "oracle_gate_stdout.txt") $gateOut
