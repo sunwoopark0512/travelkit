@@ -1,0 +1,15 @@
+SYSTEM_NAME: Somatic Checklist Writing System
+SYSTEM_VERSION: 1.0
+ENTRYPOINTS:
+- /docs/ssot/
+- /docs/learning/
+- /dashboard/cards.json
+
+CLUSTERS:
+
+STRUCTURE_RULES:
+- Every card includes Definitions (table), Procedure (steps), FAQ (>=3), System Claim.
+- Every card declares Pass Condition; locked cards declare Unlock Rule.
+
+MACHINE_READABLE:
+- cards.json is authoritative index for all routine cards (card_id keyed).
